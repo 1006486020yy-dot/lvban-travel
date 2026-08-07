@@ -7,46 +7,31 @@
 <title>旅伴旅行管家</title>
 <style>
 :root{
-  --bg:#f4f3ff;--card:rgba(255,255,255,.70);--text:#182033;--muted:#75809a;
-  --blue:#4f6cff;--purple:#7c4dff;--line:rgba(255,255,255,.72);
+  --bg:#f4f3ff;--card:rgba(255,255,255,.72);--text:#182033;--muted:#75809a;
+  --blue:#4f6cff;--purple:#7c4dff;--line:rgba(255,255,255,.82);
   --shadow:0 18px 50px rgba(68,72,145,.13);--r:24px
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text)}
 body{
-  background:
-    radial-gradient(circle at 8% 0%,rgba(124,77,255,.18),transparent 28%),
-    radial-gradient(circle at 92% 8%,rgba(79,108,255,.18),transparent 30%),
-    linear-gradient(180deg,#fafaff 0%,#eef1ff 100%);
+ background:
+ radial-gradient(circle at 8% 0%,rgba(124,77,255,.18),transparent 28%),
+ radial-gradient(circle at 92% 8%,rgba(79,108,255,.18),transparent 30%),
+ linear-gradient(180deg,#fafaff 0%,#eef1ff 100%);
 }
-button,input,textarea{font:inherit}button{border:0;cursor:pointer}
+button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}
 .app{width:min(520px,100%);min-height:100vh;margin:auto;padding-bottom:88px}
-.top{
-  position:sticky;top:0;z-index:30;padding:15px 18px 12px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(248,249,255,.66);backdrop-filter:blur(24px) saturate(160%);
-  border-bottom:1px solid rgba(255,255,255,.55)
-}
+.top{position:sticky;top:0;z-index:30;padding:15px 18px 12px;display:flex;align-items:center;justify-content:space-between;background:rgba(248,249,255,.66);backdrop-filter:blur(24px) saturate(160%);border-bottom:1px solid rgba(255,255,255,.55)}
 .logo{font-size:22px;font-weight:850}.sub{font-size:12px;color:var(--muted);margin-top:3px}
 .circle{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.72);box-shadow:var(--shadow)}
 main{padding:0 16px}.page{display:none}.page.active{display:block}
-.hero{padding:13px 0 14px}.heroCard{
-  position:relative;overflow:hidden;border-radius:30px;padding:25px;
-  background:linear-gradient(135deg,#3b48aa,#5c68e4 48%,#7853d7);color:#fff;
-  box-shadow:0 24px 60px rgba(78,85,185,.27)
-}
+.hero{padding:13px 0 14px}.heroCard{position:relative;overflow:hidden;border-radius:30px;padding:25px;background:linear-gradient(135deg,#3b48aa,#5c68e4 48%,#7853d7);color:#fff;box-shadow:0 24px 60px rgba(78,85,185,.27)}
 .heroCard:before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-95px;background:rgba(255,255,255,.13)}
 .heroCard:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-60px;bottom:-80px;background:rgba(255,255,255,.10)}
 .kicker{font-size:11px;letter-spacing:2px;color:#d5dcff}.hero h1{font-size:29px;margin:8px 0}.hero p{font-size:13px;color:rgba(255,255,255,.82);margin:0}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.entry{
-  min-height:112px;padding:18px;text-align:left;border-radius:21px;
-  background:var(--card);border:1px solid var(--line);backdrop-filter:blur(20px);
-  box-shadow:var(--shadow);transition:.22s
-}.entry:active{transform:scale(.97)}.entry b{font-size:25px;display:block;margin-bottom:11px}.entry strong{font-size:15px}.entry span{display:block;color:var(--muted);font-size:11px;margin-top:4px}
-.card,.tripCard,.itemCard,.aiPanel{
-  background:var(--card);border:1px solid var(--line);backdrop-filter:blur(22px) saturate(150%);
-  border-radius:22px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px
-}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.entry{min-height:112px;padding:18px;text-align:left;border-radius:21px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(20px);box-shadow:var(--shadow);transition:.22s}.entry:active{transform:scale(.97)}
+.entry b{font-size:25px;display:block;margin-bottom:11px}.entry strong{font-size:15px}.entry span{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.card,.tripCard,.itemCard,.aiPanel{background:var(--card);border:1px solid var(--line);backdrop-filter:blur(22px) saturate(150%);border-radius:22px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
 .section{margin:18px 0}.sectionHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.sectionHead h3{margin:0;font-size:17px}
 .muted,.small{color:var(--muted)}.small{font-size:12px;line-height:1.65}.row{display:flex;gap:8px}.row>*{flex:1}
 .primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;padding:11px 14px;border-radius:13px;font-weight:750;box-shadow:0 10px 24px rgba(79,108,255,.24)}
@@ -58,329 +43,339 @@ main{padding:0 16px}.page{display:none}.page.active{display:block}
 .eventTime{font-weight:800;color:var(--blue);font-size:13px}.eventTitle{font-size:15px;font-weight:750;margin:5px 0}.eventAddr{font-size:11px;color:var(--muted);line-height:1.5}
 .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.actions button{background:#f1f3fa;padding:8px 10px;border-radius:10px;font-size:11px}
 .itemTop{display:flex;gap:12px}.thumb{width:72px;height:72px;flex:none;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#e3e6f7,#f8f8ff);font-size:25px}.itemCard h3{margin:0 0 5px;font-size:15px}.price{font-size:11px;color:#f18b38;margin-top:5px}.itemBtns{display:flex;gap:7px;margin-top:11px}.itemBtns button{flex:1;background:#f1f3fa;border-radius:10px;padding:9px 5px;font-size:11px}.itemBtns .add{background:#edf0ff;color:var(--blue)}
-.bottom{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:70px;
-  display:grid;grid-template-columns:repeat(5,1fr);z-index:40;padding-bottom:env(safe-area-inset-bottom);
-  background:rgba(255,255,255,.70);backdrop-filter:blur(26px) saturate(160%);border-top:1px solid var(--line)
-}.nav{background:none;color:#7d879b;font-size:10px}.nav b{display:block;font-size:20px;margin-bottom:3px}.nav.on{color:var(--blue)}
-.plus{width:48px;height:48px;border-radius:17px;background:#293458;color:#fff;align-self:center;justify-self:center;font-size:22px}
+.featureGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.feature{padding:14px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82)}.feature b{font-size:20px}.feature strong{display:block;margin-top:8px;font-size:13px}.feature span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:70px;display:grid;grid-template-columns:repeat(5,1fr);z-index:40;padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.70);backdrop-filter:blur(26px) saturate(160%);border-top:1px solid var(--line)}
+.nav{background:none;color:#7d879b;font-size:10px}.nav b{display:block;font-size:20px;margin-bottom:3px}.nav.on{color:var(--blue)}.plus{width:48px;height:48px;border-radius:17px;background:#293458;color:#fff;align-self:center;justify-self:center;font-size:22px}
 .empty{text-align:center;padding:30px 10px;color:var(--muted);font-size:12px}
 .modalWrap{display:none;position:fixed;inset:0;z-index:60;background:rgba(18,22,42,.35);align-items:flex-end;justify-content:center}.modalWrap.on{display:flex}
-.modal{width:min(520px,100%);max-height:88vh;overflow:auto;padding:20px;border-radius:28px 28px 0 0;background:rgba(255,255,255,.92);backdrop-filter:blur(24px)}
+.modal{width:min(520px,100%);max-height:88vh;overflow:auto;padding:20px;border-radius:28px 28px 0 0;background:rgba(255,255,255,.94);backdrop-filter:blur(24px)}
 .modalHead{display:flex;justify-content:space-between;align-items:center}.modalHead h2{margin:0;font-size:19px}.close{width:34px;height:34px;border-radius:50%;background:#f0f2f8}
-.form{display:grid;gap:10px;margin-top:14px}.form label{font-size:11px;color:#69738a}.form input,.form textarea{width:100%;margin-top:5px;border:1px solid #e1e5ef;border-radius:13px;padding:11px;background:#fafbff;outline:none}.form textarea{min-height:100px;resize:vertical}.formBtns{display:flex;gap:8px;margin-top:14px}.formBtns>*{flex:1}
+.form{display:grid;gap:10px;margin-top:14px}.form label{font-size:11px;color:#69738a}.form input,.form textarea,.form select{width:100%;margin-top:5px;border:1px solid #e1e5ef;border-radius:13px;padding:11px;background:#fafbff;outline:none}.form textarea{min-height:100px;resize:vertical}.formBtns{display:flex;gap:8px;margin-top:14px}.formBtns>*{flex:1}
 .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:90;background:#293458;color:#fff;padding:10px 14px;border-radius:12px;font-size:12px;opacity:0;pointer-events:none;transition:.2s}.toast.on{opacity:1}
 @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.hero,.grid,.section{animation:up .45s ease both}.grid{animation-delay:.06s}.section{animation-delay:.12s}
-
-/* AI：移动端聊天工作台，参考主流 AI App 的聊天布局 */
-.aiPage{min-height:calc(100vh - 88px);padding-bottom:92px}
-.aiTopbar{
-  position:sticky;top:0;z-index:20;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 2px 10px;
-  background:rgba(248,249,255,.72);
-  backdrop-filter:blur(22px) saturate(160%);
-}
-.aiTitle{display:flex;align-items:center;gap:10px}
-.aiAvatar{
-  width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
-  color:#fff;font-size:19px;font-weight:800;
-  background:linear-gradient(135deg,#526cff,#8b5cf6);
-  box-shadow:0 8px 22px rgba(79,108,255,.25)
-}
-.aiTitle b{font-size:17px}.aiTitle span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
-.aiMore{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.7);color:#66718a}
-.aiQuick{
-  display:flex;gap:7px;overflow:auto;padding:2px 0 9px;
-  scrollbar-width:none
-}.aiQuick::-webkit-scrollbar{display:none}
-.aiQuick button{
-  flex:none;white-space:nowrap;border:1px solid rgba(255,255,255,.9);
-  border-radius:999px;padding:8px 11px;font-size:11px;color:#53617b;
-  background:rgba(255,255,255,.68);box-shadow:0 7px 20px rgba(68,72,145,.08)
-}
-.aiQuick button:active{transform:scale(.96)}
-.aiConversation{
-  display:flex;flex-direction:column;gap:13px;
-  padding:5px 1px 120px
-}
-.aiWelcome{
-  padding:18px 17px;border-radius:22px;
-  background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(242,244,255,.78));
-  border:1px solid rgba(255,255,255,.92);box-shadow:var(--shadow)
-}
-.aiWelcome b{font-size:16px}.aiWelcome p{font-size:12px;line-height:1.7;color:var(--muted);margin:7px 0 0}
-.aiBubble{
-  max-width:88%;font-size:13px;line-height:1.75;padding:12px 14px;
-  border-radius:19px;white-space:pre-wrap;word-break:break-word;
-  box-shadow:0 9px 25px rgba(68,72,145,.08)
-}
-.aiBubble.user{
-  align-self:flex-end;color:#fff;
-  border-bottom-right-radius:7px;
-  background:linear-gradient(135deg,#4f6cff,#7658e8)
-}
-.aiBubble.assistant{
-  align-self:flex-start;background:rgba(255,255,255,.82);
-  border:1px solid rgba(255,255,255,.92);border-bottom-left-radius:7px
-}
-.aiBubble.loading{color:var(--muted)}
-.aiBubble.loading:after{content:"";display:inline-block;width:6px;height:6px;margin-left:7px;border-radius:50%;background:#7c4dff;box-shadow:10px 0 #9b8af4,20px 0 #c3b9fa;animation:typing 1s infinite}
-@keyframes typing{0%,100%{opacity:.35}50%{opacity:1}}
-.aiRouteCard{
-  align-self:flex-start;width:92%;padding:14px;border-radius:19px;
-  background:linear-gradient(135deg,rgba(240,243,255,.92),rgba(249,245,255,.92));
-  border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow)
-}
-.aiRouteCard .routeHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.aiRouteCard b{font-size:13px}.aiRouteCard small{color:var(--muted);font-size:10px}
-.aiRouteCard p{margin:7px 0 0;color:#59647b;font-size:11px;line-height:1.65}
-.aiComposerWrap{
-  position:fixed;left:50%;bottom:70px;transform:translateX(-50%);
-  width:min(520px,100%);z-index:45;padding:8px 12px 10px;
-  background:linear-gradient(180deg,rgba(244,245,255,0),rgba(244,245,255,.90) 30%);
-  backdrop-filter:blur(16px)
-}
-.aiComposer{
-  display:flex;align-items:flex-end;gap:7px;padding:7px;
-  border-radius:23px;background:rgba(255,255,255,.88);
-  border:1px solid rgba(255,255,255,.96);
-  box-shadow:0 12px 35px rgba(65,75,150,.18)
-}
-.aiComposer textarea{
-  flex:1;min-width:0;max-height:110px;min-height:42px;resize:none;
-  border:0;outline:0;background:transparent;padding:10px 9px;
-  color:var(--text);font-size:14px;line-height:1.45
-}
-.aiComposer textarea::placeholder{color:#9aa3b4}
-.aiSend{
-  width:43px;height:43px;flex:none;border-radius:15px;color:#fff;
-  background:linear-gradient(135deg,#4f6cff,#7c4dff);
-  font-size:18px;box-shadow:0 7px 18px rgba(79,108,255,.25)
-}
-.aiComposerTools{display:flex;gap:6px;margin-top:6px;padding-left:5px}
-.aiMini{
-  background:rgba(255,255,255,.58);color:#7a8498;
-  border:1px solid rgba(255,255,255,.75);border-radius:10px;
-  padding:5px 8px;font-size:10px
-}
-.aiHint{text-align:center;color:#a1a8b7;font-size:9px;margin-top:5px}
-.aiError{color:#b33b4b;background:#fff1f3;border:1px solid #ffe0e5}
-@media(max-width:390px){.aiBubble{max-width:91%}.aiConversation{padding-bottom:125px}}
+.aiPage{min-height:calc(100vh - 88px);padding-bottom:92px}.aiTopbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:12px 2px 10px;background:rgba(248,249,255,.72);backdrop-filter:blur(22px) saturate(160%)}
+.aiTitle{display:flex;align-items:center;gap:10px}.aiAvatar{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:19px;font-weight:800;background:linear-gradient(135deg,#526cff,#8b5cf6);box-shadow:0 8px 22px rgba(79,108,255,.25)}.aiTitle b{font-size:17px}.aiTitle span{display:block;color:var(--muted);font-size:10px;margin-top:2px}.aiMore{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.7);color:#66718a}
+.aiQuick{display:flex;gap:7px;overflow:auto;padding:2px 0 9px;scrollbar-width:none}.aiQuick::-webkit-scrollbar{display:none}.aiQuick button{flex:none;white-space:nowrap;border:1px solid rgba(255,255,255,.9);border-radius:999px;padding:8px 11px;font-size:11px;color:#53617b;background:rgba(255,255,255,.68);box-shadow:0 7px 20px rgba(68,72,145,.08)}
+.aiConversation{display:flex;flex-direction:column;gap:13px;padding:5px 1px 120px}.aiWelcome{padding:18px 17px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(242,244,255,.78));border:1px solid rgba(255,255,255,.92);box-shadow:var(--shadow)}.aiWelcome b{font-size:16px}.aiWelcome p{font-size:12px;line-height:1.7;color:var(--muted);margin:7px 0 0}
+.aiBubble{max-width:88%;font-size:13px;line-height:1.75;padding:12px 14px;border-radius:19px;white-space:pre-wrap;word-break:break-word;box-shadow:0 9px 25px rgba(68,72,145,.08)}.aiBubble.user{align-self:flex-end;color:#fff;border-bottom-right-radius:7px;background:linear-gradient(135deg,#4f6cff,#7658e8)}.aiBubble.assistant{align-self:flex-start;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.92);border-bottom-left-radius:7px}.aiBubble.loading{color:var(--muted)}
+.aiBubble.loading:after{content:"";display:inline-block;width:6px;height:6px;margin-left:7px;border-radius:50%;background:#7c4dff;box-shadow:10px 0 #9b8af4,20px 0 #c3b9fa;animation:typing 1s infinite}@keyframes typing{0%,100%{opacity:.35}50%{opacity:1}}
+.aiRouteCard{align-self:flex-start;width:92%;padding:14px;border-radius:19px;background:linear-gradient(135deg,rgba(240,243,255,.92),rgba(249,245,255,.92));border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow)}.aiRouteCard b{font-size:13px}.aiRouteCard p{margin:7px 0 0;color:#59647b;font-size:11px;line-height:1.65}
+.aiComposerWrap{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);width:min(520px,100%);z-index:45;padding:8px 12px 10px;background:linear-gradient(180deg,rgba(244,245,255,0),rgba(244,245,255,.90) 30%);backdrop-filter:blur(16px)}
+.aiComposer{display:flex;align-items:flex-end;gap:7px;padding:7px;border-radius:23px;background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.96);box-shadow:0 12px 35px rgba(65,75,150,.18)}
+.aiComposer textarea{flex:1;min-width:0;max-height:110px;min-height:42px;resize:none;border:0;outline:0;background:transparent;padding:10px 9px;color:var(--text);font-size:14px;line-height:1.45}.aiComposer textarea::placeholder{color:#9aa3b4}.aiSend{width:43px;height:43px;flex:none;border-radius:15px;color:#fff;background:linear-gradient(135deg,#4f6cff,#7c4dff);font-size:18px;box-shadow:0 7px 18px rgba(79,108,255,.25)}
+.aiComposerTools{display:flex;gap:6px;margin-top:6px;padding-left:5px}.aiMini{background:rgba(255,255,255,.58);color:#7a8498;border:1px solid rgba(255,255,255,.75);border-radius:10px;padding:5px 8px;font-size:10px}.aiHint{text-align:center;color:#a1a8b7;font-size:9px;margin-top:5px}
+.listSearch{width:100%;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.68);padding:12px 14px;border-radius:15px;outline:none;margin-bottom:12px}
+.back{display:inline-flex;align-items:center;gap:5px;background:none;color:var(--blue);padding:7px 0;font-size:12px}
+@media(max-width:390px){.aiBubble{max-width:91%}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="top"><div><div class="logo">旅伴</div><div class="sub">你的旅行管家</div></div><button class="circle" onclick="showPage('me')">◉</button></header>
-  <main>
-    <section id="home" class="page active"></section>
-    <section id="trip" class="page"></section>
-    <section id="cities" class="page"></section>
-    <section id="food" class="page"></section>
-    <section id="spots" class="page"></section>
-    <section id="ai" class="page"></section>
-    <section id="me" class="page"></section>
-  </main>
-</div>
+<header class="top">
+  <div><div class="logo">旅伴</div><div class="sub">你的旅行管家</div></div>
+  <button class="circle" onclick="openModal('cityModal')">＋</button>
+</header>
+
+<main>
+<section id="homePage" class="page active">
+  <div class="hero">
+    <div class="heroCard">
+      <div class="kicker">TRAVELMATE</div>
+      <h1>福建国庆旅行</h1>
+      <p>福州 → 平潭 → 泉州 → 厦门 · 人文与海岛</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <button class="entry" onclick="go('trip')"><b>🗓️</b><strong>我的行程</strong><span>时间轴 · 编辑 · A/B 路线</span></button>
+    <button class="entry" onclick="go('spot')"><b>📍</b><strong>景点</strong><span>按城市浏览 · AI 添加</span></button>
+    <button class="entry" onclick="go('food')"><b>🍜</b><strong>美食</strong><span>店铺 · 地址 · 加入行程</span></button>
+    <button class="entry" onclick="go('traffic')"><b>🚆</b><strong>交通</strong><span>高铁 · 地铁 · 打车 · 接驳</span></button>
+    <button class="entry" onclick="go('hotel')"><b>🏨</b><strong>酒店</strong><span>住宿安排 · 地址 · 加入行程</span></button>
+    <button class="entry" onclick="go('city')"><b>🏙️</b><strong>城市</strong><span>新建城市 · 城市探索</span></button>
+  </div>
+
+  <div class="section">
+    <div class="sectionHead"><h3>快捷操作</h3><span class="small">第一梯队功能</span></div>
+    <div class="featureGrid">
+      <button class="feature" onclick="go('ai');setTimeout(()=>quickAI('帮我把当前行程重新优化一下，注意交通时间和景点开放时间'),50)"><b>✦</b><strong>AI 优化路线</strong><span>根据当前行程重新排序</span></button>
+      <button class="feature" onclick="go('ai');setTimeout(()=>quickAI('检查当前行程有没有时间冲突、路线冲突或安排过密'),50)"><b>✓</b><strong>AI 冲突检测</strong><span>检查时间与路线</span></button>
+      <button class="feature" onclick="openModal('addModal')"><b>＋</b><strong>添加景点 / 美食 / 酒店</strong><span>手动或让 AI 添加</span></button>
+      <button class="feature" onclick="openModal('cityModal')"><b>⌂</b><strong>新建城市</strong><span>扩展你的旅行目的地</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sectionHead"><h3>当前行程</h3><button class="back" onclick="go('trip')">查看全部 ›</button></div>
+    <div class="tripCard">
+      <strong>方案 A</strong>
+      <div class="small">福州 → 平潭 → 泉州 → 厦门</div>
+      <div class="small" style="margin-top:6px">9/29–10/4 · 四城完整路线</div>
+    </div>
+    <div class="tripCard">
+      <strong>方案 B</strong>
+      <div class="small">厦门重点调整：10/2 鼓浪屿；10/3 南普陀＋植物园＋钟鼓索道；10/4 其他景点后返程</div>
+    </div>
+  </div>
+</section>
+
+<section id="tripPage" class="page">
+  <div class="section">
+    <div class="sectionHead"><h3>我的行程</h3><button class="ghost" onclick="openModal('eventModal')">＋ 添加</button></div>
+    <div class="pills"><button id="routeA" class="pill on" onclick="switchRoute('A')">方案 A</button><button id="routeB" class="pill" onclick="switchRoute('B')">方案 B</button></div>
+    <div id="routeSummary" class="card"></div>
+    <div id="days" class="daybar"></div>
+    <div id="timeline" class="timeline"></div>
+    <div class="row"><button class="primary" onclick="optimizeLocal()">自动优化</button><button class="ghost" onclick="checkConflicts()">冲突检测</button></div>
+  </div>
+</section>
+
+<section id="spotPage" class="page">
+  <div class="section"><div class="sectionHead"><h3>景点</h3><button class="primary" onclick="aiAdd('景点')">✦ AI 添加</button></div>
+    <input class="listSearch" id="spotSearch" placeholder="搜索景点或城市" oninput="renderList('spot')"><div id="spotList"></div>
+  </div>
+</section>
+
+<section id="foodPage" class="page">
+  <div class="section"><div class="sectionHead"><h3>美食</h3><button class="primary" onclick="aiAdd('美食')">✦ AI 添加</button></div>
+    <input class="listSearch" id="foodSearch" placeholder="搜索店铺、菜系或城市" oninput="renderList('food')"><div id="foodList"></div>
+  </div>
+</section>
+
+<section id="trafficPage" class="page">
+  <div class="section"><div class="sectionHead"><h3>交通</h3><button class="primary" onclick="openModal('trafficModal')">＋ 添加</button></div>
+    <div class="card"><strong>福建国庆交通</strong><div class="small" style="margin-top:7px">福州机场 → 平潭 · 平潭 → 泉州 · 泉州 → 厦门 · 厦门市内地铁/打车/步行</div></div>
+    <div id="trafficList"></div>
+  </div>
+</section>
+
+<section id="hotelPage" class="page">
+  <div class="section"><div class="sectionHead"><h3>酒店</h3><button class="primary" onclick="aiAdd('酒店')">✦ AI 添加</button></div>
+    <div id="hotelList"></div>
+  </div>
+</section>
+
+<section id="cityPage" class="page">
+  <div class="section"><div class="sectionHead"><h3>城市</h3><button class="primary" onclick="openModal('cityModal')">＋ 新建城市</button></div>
+    <div id="cityList"></div>
+  </div>
+</section>
+
+<section id="aiPage" class="page aiPage">
+  <div class="aiTopbar">
+    <div class="aiTitle"><div class="aiAvatar">✦</div><div><b>旅伴 AI</b><span>规划 · 调整 · 推荐 · 问答</span></div></div>
+    <button class="aiMore" onclick="clearAI()">•••</button>
+  </div>
+  <div class="aiQuick">
+    <button onclick="quickAI('优化我当前的旅行路线')">优化路线</button>
+    <button onclick="quickAI('检查当前行程有没有冲突')">冲突检测</button>
+    <button onclick="quickAI('给当前城市添加 3 个值得去的景点')">添加景点</button>
+    <button onclick="quickAI('推荐当前城市适合安排进路线的美食')">添加美食</button>
+    <button onclick="quickAI('帮我安排当前城市附近合适的酒店')">添加酒店</button>
+  </div>
+  <div id="aiConversation" class="aiConversation"></div>
+</section>
+
+<section id="minePage" class="page">
+  <div class="section"><h2 style="margin-bottom:5px">我的</h2><div class="small">旅行数据保存在当前设备</div></div>
+  <div class="card"><strong>旅伴旅行管家</strong><div class="small" style="margin-top:7px">移动端优先 · 蓝紫玻璃质感 · AI 旅行助手</div></div>
+  <div class="card"><div class="sectionHead"><strong>数据</strong><span class="small">本地保存</span></div><div class="row"><button class="ghost" onclick="exportData()">导出</button><button class="ghost" onclick="resetData()">恢复默认</button></div></div>
+</section>
+</main>
 
 <nav class="bottom">
-  <button class="nav on" data-p="home" onclick="showPage('home')"><b>⌂</b>首页</button>
-  <button class="nav" data-p="trip" onclick="showPage('trip')"><b>▣</b>行程</button>
-  <button class="plus" onclick="openTrip()">＋</button>
-  <button class="nav" data-p="ai" onclick="showPage('ai')"><b>✦</b>旅伴AI</button>
-  <button class="nav" data-p="me" onclick="showPage('me')"><b>◎</b>我的</button>
+ <button class="nav on" data-page="home" onclick="go('home')"><b>⌂</b>首页</button>
+ <button class="nav" data-page="trip" onclick="go('trip')"><b>▣</b>行程</button>
+ <button class="plus" onclick="openModal('addModal')">＋</button>
+ <button class="nav" data-page="ai" onclick="go('ai')"><b>✦</b>旅伴AI</button>
+ <button class="nav" data-page="mine" onclick="go('mine')"><b>◎</b>我的</button>
 </nav>
+</div>
 
-<div id="modal" class="modalWrap"><div class="modal"><div class="modalHead"><h2 id="modalTitle">新增</h2><button class="close" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
+<div id="addModal" class="modalWrap"><div class="modal"><div class="modalHead"><h2>添加到旅程</h2><button class="close" onclick="closeModal('addModal')">×</button></div><div class="form">
+<button class="entry" style="min-height:70px" onclick="closeModal('addModal');aiAdd('景点')">📍 AI 添加景点</button>
+<button class="entry" style="min-height:70px" onclick="closeModal('addModal');aiAdd('美食')">🍜 AI 添加美食</button>
+<button class="entry" style="min-height:70px" onclick="closeModal('addModal');aiAdd('酒店')">🏨 AI 添加酒店</button>
+<button class="entry" style="min-height:70px" onclick="closeModal('addModal');openModal('eventModal')">🗓️ 手动添加行程</button>
+</div></div></div>
+
+<div id="eventModal" class="modalWrap"><div class="modal"><div class="modalHead"><h2>添加行程</h2><button class="close" onclick="closeModal('eventModal')">×</button></div>
+<div class="form"><label>日期<input id="evDate" type="date"></label><label>时间<input id="evTime" type="time" value="10:00"></label><label>名称<input id="evTitle" placeholder="例如：三坊七巷"></label><label>地点<input id="evAddr" placeholder="地址或区域"></label>
+<div class="formBtns"><button class="ghost" onclick="closeModal('eventModal')">取消</button><button class="primary" onclick="addEvent()">加入行程</button></div></div></div></div>
+
+<div id="cityModal" class="modalWrap"><div class="modal"><div class="modalHead"><h2>新建城市</h2><button class="close" onclick="closeModal('cityModal')">×</button></div><div class="form"><label>城市名称<input id="cityName" placeholder="例如：泉州"></label><label>备注<textarea id="cityNote" placeholder="可填写旅行重点"></textarea></label><div class="formBtns"><button class="ghost" onclick="closeModal('cityModal')">取消</button><button class="primary" onclick="addCity()">创建城市</button></div></div></div></div>
+
+<div id="trafficModal" class="modalWrap"><div class="modal"><div class="modalHead"><h2>添加交通</h2><button class="close" onclick="closeModal('trafficModal')">×</button></div><div class="form"><label>交通方式<input id="trType" placeholder="高铁 / 地铁 / 打车 / 步行"></label><label>路线<input id="trRoute" placeholder="例如：泉州站 → 厦门站"></label><label>备注<input id="trNote" placeholder="预计时间、费用等"></label><div class="formBtns"><button class="ghost" onclick="closeModal('trafficModal')">取消</button><button class="primary" onclick="addTraffic()">保存</button></div></div></div></div>
+
 <div id="toast" class="toast"></div>
 
 <script>
-const AI_ENDPOINT="/ai";
-const state={
-  trips:JSON.parse(localStorage.getItem("tm_trips")||"[]"),
-  messages:JSON.parse(localStorage.getItem("tm_ai_messages")||"[]")
+const DEFAULT={
+ route:'A',day:0,
+ routes:{
+  A:{
+   title:'方案 A｜福州 → 平潭 → 泉州 → 厦门',
+   desc:'四城完整路线｜人文世遗＋海岛',
+   days:[
+    {date:'9/29',city:'福州 → 平潭',events:[
+      ['08:30','福州早餐','福州市区'],['11:30','前往平潭岛','福州 → 平潭'],['14:00','平潭北线 / 海岛风光','平潭岛'],['18:00','龙王头沙滩看日落','龙王头沙滩']
+    ]},
+    {date:'9/30',city:'平潭',events:[
+      ['08:30','平潭北线','长江澳 / 北部生态廊道'],['13:30','平潭南线','坛南湾 / 将军山一带'],['17:30','海边晚餐','平潭']
+    ]},
+    {date:'10/1',city:'平潭 → 泉州',events:[
+      ['08:30','平潭上午自由活动','平潭'],['11:30','前往泉州','平潭 → 泉州'],['14:30','泉州古城','开元寺 / 西街 / 钟楼'],['19:00','泉州古城夜游','西街']
+    ]},
+    {date:'10/2',city:'泉州 → 厦门',events:[
+      ['08:00','泉州上午活动','古城 / 洛伽寺可选'],['12:00','前往厦门','泉州 → 厦门'],['15:00','厦门城市漫游','中山路 / 八市'],['18:00','厦门晚餐','厦门']
+    ]},
+    {date:'10/3',city:'厦门',events:[
+      ['09:00','南普陀寺','厦门'],['11:00','厦门植物园','万石植物园'],['15:00','钟鼓索道','钟鼓山'],['18:00','海边晚餐','厦门']
+    ]},
+    {date:'10/4',city:'厦门 → 杭州',events:[
+      ['09:00','厦门其他景点','按体力选择'],['13:00','自由活动 / 午餐','厦门'],['17:00','前往车站 / 机场','厦门'],['晚间','返回杭州','厦门 → 杭州']
+    ]}
+   ]
+  },
+  B:{
+   title:'方案 B｜厦门重点优化',
+   desc:'10/2 鼓浪屿｜10/3 南普陀＋植物园＋钟鼓索道｜10/4 其他景点后返程',
+   days:[
+    {date:'9/29',city:'福州 → 平潭',events:[['08:30','福州早餐','福州'],['13:00','前往平潭','福州 → 平潭'],['15:00','平潭海岛风光','平潭'],['18:00','龙王头沙滩日落','平潭']]},
+    {date:'9/30',city:'平潭',events:[['08:30','平潭北线','长江澳 / 北部生态廊道'],['14:00','平潭南线','坛南湾等'],['18:00','晚餐','平潭']]},
+    {date:'10/1',city:'平潭 → 泉州',events:[['09:00','平潭上午活动','平潭'],['12:00','前往泉州','平潭 → 泉州'],['15:00','泉州古城','开元寺 / 西街'],['19:00','古城夜游','泉州']]},
+    {date:'10/2',city:'泉州 → 厦门',events:[['08:00','泉州上午活动','泉州'],['12:00','前往厦门','泉州 → 厦门'],['15:00','鼓浪屿','厦门鼓浪屿'],['19:00','鼓浪屿返回 / 晚餐','厦门']]},
+    {date:'10/3',city:'厦门',events:[['09:00','南普陀寺','厦门'],['11:00','厦门植物园','万石植物园'],['15:00','钟鼓索道','钟鼓山'],['18:00','晚餐','厦门']]},
+    {date:'10/4',city:'厦门 → 杭州',events:[['09:00','厦门其他景点','按体力选择'],['13:30','午餐 / 自由活动','厦门'],['17:00','前往车站 / 机场','厦门'],['晚间','返回杭州','厦门 → 杭州']]}
+   ]
+  }
+ },
+ spots:[
+  ['福州','三坊七巷','🏮','福州代表性历史文化街区'],
+  ['福州','烟台山','🌿','城市历史街区与江景'],
+  ['平潭','龙王头沙滩','🌊','海岛日出日落热门地点'],
+  ['平潭','长江澳风车田','🌬️','平潭北线代表性海景'],
+  ['泉州','开元寺','⛩️','泉州古城核心人文景点'],
+  ['泉州','西街','🏮','古城美食与街巷'],
+  ['厦门','鼓浪屿','🏝️','海岛与历史建筑'],
+  ['厦门','南普陀寺','⛩️','厦门经典人文景点'],
+  ['厦门','厦门植物园','🌳','城市山林景观'],
+  ['厦门','钟鼓索道','🚡','山海城市景观']
+ ],
+ foods:[
+  ['福州','福州鱼丸','🍜','福州传统小吃'],
+  ['平潭','海鲜','🦀','平潭海岛特色'],
+  ['泉州','面线糊','🍜','泉州经典早餐'],
+  ['泉州','姜母鸭','🦆','泉州代表性菜品'],
+  ['厦门','沙茶面','🍜','厦门经典小吃'],
+  ['厦门','海蛎煎','🦪','闽南特色小吃']
+ ],
+ hotels:[
+  ['平潭','西岸平潭龙王头沙滩店','🏨','9/29–10/1，当前主线住宿'],
+  ['平潭','维也纳酒店（福州平潭龙王头沙滩店）','🏨','9/29–10/1，作为待确认备选'],
+  ['泉州','维也纳酒店古城浦西店','🏨','10/1–10/2'],
+  ['厦门','西岸酒店厦门火车站店','🏨','10/2–10/4']
+ ],
+ traffic:[
+  ['✈️','福州机场 → 平潭','机场接驳 / 网约车','9/29 下午前往平潭'],
+  ['🚄','平潭 → 泉州','高铁/城际组合','10/1 前往泉州'],
+  ['🚄','泉州 → 厦门','动车 / 高铁','10/2 中午前后'],
+  ['🚇','厦门市内','地铁 + 打车 + 步行','按当天景点组合'],
+  ['🚢','鼓浪屿','轮渡','10/2 方案 B 重点']
+ ],
+ cities:[['福州','人文历史'],['平潭','海岛风光'],['泉州','世界遗产与古城'],['厦门','海岛城市']]
 };
-const save=()=>localStorage.setItem("tm_trips",JSON.stringify(state.trips));
-const saveAI=()=>localStorage.setItem("tm_ai_messages",JSON.stringify(state.messages));
-const toast=(s)=>{const x=document.getElementById("toast");x.textContent=s;x.classList.add("on");setTimeout(()=>x.classList.remove("on"),1800)};
-
-function showPage(id){
-  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("on",x.dataset.p===id));
-  render(id);
-  window.scrollTo({top:0,behavior:"smooth"});
+let data=JSON.parse(localStorage.getItem('lvban_data')||'null')||DEFAULT;
+let currentPage='home',currentRoute=data.route||'A',currentDay=data.day||0;
+function save(){localStorage.setItem('lvban_data',JSON.stringify(data))}
+function $(id){return document.getElementById(id)}
+function toast(s){$('toast').textContent=s;$('toast').classList.add('on');setTimeout(()=>$('toast').classList.remove('on'),1800)}
+function go(p){
+ currentPage=p;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ const el=$(p+'Page');if(el)el.classList.add('active');
+ document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.page===p));
+ if(p==='trip')renderTrip();if(p==='spot')renderList('spot');if(p==='food')renderList('food');if(p==='hotel')renderHotels();if(p==='traffic')renderTraffic();if(p==='city')renderCities();if(p==='ai')renderAI();
+ window.scrollTo({top:0,behavior:'smooth'});
 }
-function openModal(title,html){document.getElementById("modalTitle").textContent=title;document.getElementById("modalBody").innerHTML=html;document.getElementById("modal").classList.add("on")}
-function closeModal(){document.getElementById("modal").classList.remove("on")}
-
-function renderHome(){
- document.getElementById("home").innerHTML=`
-  <div class="hero"><div class="heroCard"><div class="kicker">TRAVELMATE</div><h1>把旅行，安排得刚刚好</h1><p>行程、景点、美食、AI 规划，一处管理。</p></div></div>
-  <div class="grid">
-    <button class="entry" onclick="showPage('trip')"><b>🗓️</b><strong>我的行程</strong><span>时间轴 · 编辑 · 添加</span></button>
-    <button class="entry" onclick="showPage('spots')"><b>📍</b><strong>景点</strong><span>按城市浏览与收藏</span></button>
-    <button class="entry" onclick="showPage('food')"><b>🍜</b><strong>美食</strong><span>店铺 · 地址 · 导航</span></button>
-    <button class="entry" onclick="showPage('ai')"><b>✦</b><strong>旅伴 AI</strong><span>规划 · 调整 · 推荐 · 问答</span></button>
-  </div>
-  <div class="section"><div class="sectionHead"><h3>城市探索</h3><button class="ghost" onclick="showPage('cities')">查看全部</button></div>
-    <div class="card"><b>福州 · 平潭 · 泉州 · 厦门</b><p class="small">从城市灵感到具体路线，慢慢把下一次旅行拼完整。</p></div>
-  </div>`;
-}
+function openModal(id){$(id).classList.add('on')}
+function closeModal(id){$(id).classList.remove('on')}
+function switchRoute(r){currentRoute=r;data.route=r;currentDay=0;save();renderTrip()}
 function renderTrip(){
- const el=document.getElementById("trip");
- if(!state.trips.length){el.innerHTML=`<div class="section"><div class="sectionHead"><h3>我的行程</h3><button class="primary" onclick="openTrip()">＋ 添加</button></div><div class="card empty">还没有行程。<br>点击右下方 ＋，创建第一段旅行。</div></div>`;return}
- el.innerHTML=`<div class="section"><div class="sectionHead"><h3>我的行程</h3><button class="primary" onclick="openTrip()">＋ 添加</button></div>
- ${state.trips.map((t,i)=>`<div class="event"><div class="eventTime">${esc(t.time||"待定")}</div><div class="eventTitle">${esc(t.title)}</div><div class="eventAddr">${esc(t.city||"")}${t.note?" · "+esc(t.note):""}</div><div class="actions"><button onclick="editTrip(${i})">编辑</button><button onclick="deleteTrip(${i})">删除</button></div></div>`).join("")}</div>`;
+ const r=data.routes[currentRoute];$('routeA').classList.toggle('on',currentRoute==='A');$('routeB').classList.toggle('on',currentRoute==='B');
+ $('routeSummary').innerHTML='<strong>'+r.title+'</strong><div class="small" style="margin-top:6px">'+r.desc+'</div>';
+ $('days').innerHTML=r.days.map((d,i)=>'<button class="daybtn '+(i===currentDay?'on':'')+'" onclick="currentDay='+i+';data.day='+i+';save();renderTrip()"><b>'+d.date+'</b>'+d.city+'</button>').join('');
+ const d=r.days[currentDay];
+ $('timeline').innerHTML=d.events.map((e,i)=>'<div class="event"><div class="eventTime">'+e[0]+'</div><div class="eventTitle">'+e[1]+'</div><div class="eventAddr">'+e[2]+'</div><div class="actions"><button onclick="editEvent('+currentDay+','+i+')">编辑</button><button onclick="deleteEvent('+currentDay+','+i+')">删除</button><button onclick="addToAI('+JSON.stringify(e[1])+')">让 AI 调整</button></div></div>').join('');
 }
-function openTrip(i=null){
- const t=i===null?{}:state.trips[i];
- openModal(i===null?"添加行程":"编辑行程",`<div class="form">
- <label>日期 / 时间<input id="fTime" value="${esc(t.time||"")}" placeholder="例如：9月30日 09:00"></label>
- <label>城市<input id="fCity" value="${esc(t.city||"")}" placeholder="例如：平潭"></label>
- <label>事项<input id="fTitle" value="${esc(t.title||"")}" placeholder="例如：北线环岛"></label>
- <label>备注<textarea id="fNote" placeholder="交通、门票、集合点等">${esc(t.note||"")}</textarea></label>
- <div class="formBtns"><button class="ghost" onclick="closeModal()">取消</button><button class="primary" onclick="saveTrip(${i===null?"null":i})">保存</button></div></div>`);
+function addEvent(){
+ const d=$('evDate').value||'';const t=$('evTime').value||'10:00';const title=$('evTitle').value.trim();const addr=$('evAddr').value.trim();
+ if(!title)return toast('请先填写行程名称');
+ const r=data.routes[currentRoute];let idx=r.days.findIndex(x=>x.date.replace('/','-')===d.slice(5));if(idx<0)idx=currentDay;
+ r.days[idx].events.push([t,title,addr||'未填写地点']);r.days[idx].events.sort((a,b)=>a[0].localeCompare(b[0]));save();closeModal('eventModal');$('evTitle').value='';$('evAddr').value='';renderTrip();toast('已加入行程')
 }
-function saveTrip(i){const t={time:fTime.value,city:fCity.value,title:fTitle.value,note:fNote.value};if(!t.title){toast("请先填写事项");return}if(i===null)state.trips.push(t);else state.trips[i]=t;save();closeModal();renderTrip();toast("行程已保存")}
-function editTrip(i){openTrip(i)}function deleteTrip(i){if(confirm("删除这条行程？")){state.trips.splice(i,1);save();renderTrip();toast("已删除")}}
-
-const spots=[
- ["福州","三坊七巷","历史街区 · 人文漫步","🏮"],["平潭","龙王头沙滩","看海 · 日落 · 环岛","🌊"],
- ["泉州","西街","古城 · 小吃 · 夜游","⛩️"],["厦门","鼓浪屿","建筑 · 海岛 · 漫步","🏝️"]
-];
-const foods=[
- ["福州","鱼丸 / 肉燕","适合早餐或古城小吃","🍥"],["平潭","海鲜","海岛当日鲜","🦐"],
- ["泉州","面线糊","闽南早餐","🍜"],["厦门","沙茶面","厦门经典","🥣"]
-];
-function renderSpots(){document.getElementById("spots").innerHTML=`<div class="section"><div class="sectionHead"><h3>景点</h3></div>${spots.map(x=>`<div class="itemCard"><div class="itemTop"><div class="thumb">${x[3]}</div><div><h3>${x[1]}</h3><div class="small">${x[0]} · ${x[2]}</div></div></div><div class="itemBtns"><button onclick="toast('已复制：${x[1]}')">复制名称</button><button class="add" onclick="addQuick('${x[0]}','${x[1]}')">加入行程</button></div></div>`).join("")}</div>`}
-function renderFood(){document.getElementById("food").innerHTML=`<div class="section"><div class="sectionHead"><h3>美食</h3></div>${foods.map(x=>`<div class="itemCard"><div class="itemTop"><div class="thumb">${x[3]}</div><div><h3>${x[1]}</h3><div class="small">${x[0]} · ${x[2]}</div></div></div><div class="itemBtns"><button onclick="toast('已复制：${x[1]}')">复制店铺</button><button onclick="toast('可在地图中搜索：${x[1]}')">导航</button><button class="add" onclick="addQuick('${x[0]}','${x[1]}')">加入</button></div></div>`).join("")}</div>`}
-function addQuick(city,title){state.trips.push({time:"待安排",city,title,note:"来自旅伴推荐"});save();toast("已加入我的行程")}
-function renderCities(){document.getElementById("cities").innerHTML=`<div class="section"><div class="sectionHead"><h3>城市探索</h3></div>${["福州","平潭","泉州","厦门"].map((c,i)=>`<div class="card" onclick="toast('正在探索 ${c}')"><b>${c}</b><p class="small">${["古城与烟台山","海岛环岛与日落","古城人文与闽南美食","海岛城市与海风散步"][i]}</p></div>`).join("")}</div>`}
-
+function editEvent(di,ei){
+ const e=data.routes[currentRoute].days[di].events[ei];$('evTime').value=e[0];$('evTitle').value=e[1];$('evAddr').value=e[2];
+ openModal('eventModal');
+ const old=window.addEvent;window.addEvent=function(){const title=$('evTitle').value.trim();if(!title)return toast('请填写名称');e[0]=$('evTime').value;e[1]=title;e[2]=$('evAddr').value;data.routes[currentRoute].days[di].events.sort((a,b)=>a[0].localeCompare(b[0]));save();closeModal('eventModal');window.addEvent=old;renderTrip();toast('已更新')}
+}
+function deleteEvent(di,ei){if(confirm('确定删除这条行程吗？')){data.routes[currentRoute].days[di].events.splice(ei,1);save();renderTrip();toast('已删除')}}
+function renderList(type){
+ const arr=data[type==='spot'?'spots':'foods'];const q=(type==='spot'?$('spotSearch'):$('foodSearch')).value.toLowerCase();
+ const filtered=arr.filter(x=>x.join('').toLowerCase().includes(q));
+ $(type+'List').innerHTML=filtered.map((x,i)=>'<div class="itemCard"><div class="itemTop"><div class="thumb">'+x[2]+'</div><div><h3>'+x[1]+'</h3><div class="small">'+x[0]+' · '+x[3]+'</div></div></div><div class="itemBtns"><button onclick="addPlaceToTrip('+JSON.stringify(x[1])+')">加入行程</button><button onclick="openMap('+JSON.stringify(x[1])+')">导航</button><button class="add" onclick="addToAI('+JSON.stringify('请介绍 '+x[1]+'，并告诉我适合放在当前哪一天')+')">问 AI</button></div></div>').join('')||'<div class="empty">暂时没有匹配内容</div>'
+}
+function renderHotels(){$('hotelList').innerHTML=data.hotels.map(x=>'<div class="itemCard"><div class="itemTop"><div class="thumb">'+x[2]+'</div><div><h3>'+x[1]+'</h3><div class="small">'+x[0]+' · '+x[3]+'</div></div></div><div class="itemBtns"><button onclick="addPlaceToTrip('+JSON.stringify(x[1])+')">加入行程</button><button onclick="openMap('+JSON.stringify(x[1])+')">导航</button></div></div>').join('')}
+function renderTraffic(){$('trafficList').innerHTML=data.traffic.map(x=>'<div class="itemCard"><div class="itemTop"><div class="thumb">'+x[0]+'</div><div><h3>'+x[1]+'</h3><div class="small">'+x[2]+' · '+x[3]+'</div></div></div><div class="itemBtns"><button onclick="addPlaceToTrip('+JSON.stringify(x[1])+')">加入行程</button><button onclick="addToAI('+JSON.stringify('帮我查询 '+x[1]+' 的交通建议')+')">问 AI</button></div></div>').join('')}
+function renderCities(){$('cityList').innerHTML=data.cities.map(x=>'<div class="itemCard"><h3>'+x[0]+'</h3><div class="small">'+x[1]+'</div><div class="itemBtns"><button onclick="goCityAI('+JSON.stringify(x[0])+')">AI 探索</button><button onclick="openModal('addModal')">添加内容</button></div></div>').join('')}
+function addPlaceToTrip(name){const r=data.routes[currentRoute];r.days[currentDay].events.push(['待定',name,'来自景点/美食/酒店/交通']);r.days[currentDay].events.sort((a,b)=>a[0].localeCompare(b[0]));save();toast('已加入当前行程')}
+function openMap(name){window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name),'_blank')}
+function addCity(){const n=$('cityName').value.trim();if(!n)return toast('请填写城市名称');data.cities.push([n,$('cityNote').value.trim()||'新城市']);save();$('cityName').value='';$('cityNote').value='';closeModal('cityModal');renderCities();toast('城市已创建')}
+function addTraffic(){const a=$('trType').value.trim(),b=$('trRoute').value.trim(),c=$('trNote').value.trim();if(!b)return toast('请填写路线');data.traffic.push(['🚆',b,a||'交通',c||'']);save();closeModal('trafficModal');renderTraffic();toast('交通已添加')}
+function aiAdd(type){go('ai');setTimeout(()=>quickAI('请根据我当前的福建行程，帮我添加合适的'+type+'。请直接给出推荐名称、城市、理由，以及建议放入哪一天和大概时间。'),80)}
+function goCityAI(city){go('ai');setTimeout(()=>quickAI('我准备去'+city+'，请根据当前福建行程推荐值得加入的景点、美食和安排建议。'),80)}
+function addToAI(text){go('ai');setTimeout(()=>quickAI(text),80)}
+function optimizeLocal(){
+ const r=data.routes[currentRoute];r.days.forEach(d=>d.events.sort((a,b)=>a[0].localeCompare(b[0])));save();renderTrip();toast('已按时间重新整理路线')}
+function checkConflicts(){
+ const r=data.routes[currentRoute],issues=[];
+ r.days.forEach(d=>{const times=d.events.map(x=>x[0]).filter(x=>x!=='待定');const dup=times.filter((x,i)=>times.indexOf(x)!==i);if(dup.length)issues.push(d.date+' 有重复时间：'+[...new Set(dup)].join('、'))});
+ if(issues.length)toast(issues[0]);else {go('ai');setTimeout(()=>quickAI('请检查当前方案 '+currentRoute+' 的行程冲突，包括时间、交通衔接和安排过密问题，并给出具体修改方案。'),80)}
+}
+function exportData(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='旅伴旅行管家数据.json';a.click();URL.revokeObjectURL(a.href)}
+function resetData(){if(confirm('恢复默认行程并清除本地修改？')){data=JSON.parse(JSON.stringify(DEFAULT));save();location.reload()}}
+function clearAI(){if(confirm('清空当前 AI 对话？')){localStorage.removeItem('lvban_ai');renderAI()}}
+function loadAI(){return JSON.parse(localStorage.getItem('lvban_ai')||'[]')}
+function saveAI(m){localStorage.setItem('lvban_ai',JSON.stringify(m))}
 function renderAI(){
-  const el=document.getElementById("ai");
-  const chats=state.messages.length
-    ? state.messages.map(m=>`<div class="aiBubble ${m.role==='user'?'user':'assistant'}">${esc(m.content)}</div>`).join("")
-    : `<div class="aiWelcome"><b>你好，我是旅伴 AI</b><p>你可以直接告诉我目的地、时间、预算或现有行程。我会帮你规划、调整路线、推荐景点美食，并尽量给出能直接执行的方案。</p></div>`;
-
-  el.innerHTML=`
-    <div class="aiPage">
-      <div class="aiTopbar">
-        <div class="aiTitle">
-          <div class="aiAvatar">✦</div>
-          <div><b>旅伴 AI</b><span>智能旅行规划助手</span></div>
-        </div>
-        <button class="aiMore" onclick="clearAI()">•••</button>
-      </div>
-
-      <div class="aiQuick">
-        <button onclick="usePrompt('帮我规划一份完整旅行路线')">🧭 规划路线</button>
-        <button onclick="usePrompt('根据我现在的行程，帮我重新优化时间和顺序')">✨ 优化行程</button>
-        <button onclick="usePrompt('推荐附近值得去的景点和本地美食')">📍 景点美食</button>
-        <button onclick="usePrompt('如果遇到下雨，帮我调整今天的行程')">☔ 雨天方案</button>
-      </div>
-
-      <div id="chat" class="aiConversation">${chats}</div>
-
-      <div class="aiComposerWrap">
-        <div class="aiComposer">
-          <textarea id="aiInput" rows="1" placeholder="输入你想让旅伴帮你做的事…"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}"></textarea>
-          <button class="aiSend" onclick="sendAI()" aria-label="发送">↑</button>
-        </div>
-        <div class="aiComposerTools">
-          <button class="aiMini" onclick="usePrompt('帮我看看当前行程哪里不合理')">优化当前行程</button>
-          <button class="aiMini" onclick="usePrompt('帮我推荐一顿当地特色美食')">推荐美食</button>
-          <button class="aiMini" onclick="usePrompt('帮我安排一个半天的轻松路线')">半日路线</button>
-        </div>
-        <div class="aiHint">旅伴 AI 会结合你当前保存的行程来回答</div>
-      </div>
-    </div>`;
-
-  const input=document.getElementById("aiInput");
-  if(input){
-    input.addEventListener("input",()=>{
-      input.style.height="42px";
-      input.style.height=Math.min(input.scrollHeight,110)+"px";
-    });
-  }
+ const box=$('aiConversation'),msgs=loadAI();
+ box.innerHTML='<div class="aiWelcome"><b>你好，我是旅伴 AI</b><p>我可以帮你规划和调整行程、添加景点/美食/酒店、检测冲突、优化路线，也可以直接回答旅行问题。</p></div>';
+ msgs.forEach(m=>{const d=document.createElement('div');d.className='aiBubble '+m.role;d.textContent=m.content;box.appendChild(d)});
+ setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),30)
 }
-
-function usePrompt(s){
-  const i=document.getElementById("aiInput");
-  if(i){i.value=s;i.focus();i.dispatchEvent(new Event("input"));return}
-  showPage("ai");
-  setTimeout(()=>{
-    const x=document.getElementById("aiInput");
-    if(x){x.value=s;x.focus();x.dispatchEvent(new Event("input"))}
-  },80);
+function quickAI(text){
+ const ta=document.querySelector('.aiComposer textarea');if(ta){ta.value=text;sendAI()}
 }
-
-function clearAI(){
-  if(!state.messages.length){toast("还没有聊天记录");return}
-  if(confirm("清空旅伴 AI 的聊天记录？")){
-    state.messages=[];saveAI();renderAI();toast("聊天记录已清空");
-  }
-}
-
 async function sendAI(){
-  const input=document.getElementById("aiInput");
-  const text=(input?.value||"").trim();
-  if(!text)return;
-
-  state.messages.push({role:"user",content:text});
-  saveAI();
-  renderAI();
-
-  const chat=document.getElementById("chat");
-  if(chat){
-    chat.insertAdjacentHTML("beforeend",`<div class="aiBubble assistant loading">正在整理你的旅行方案</div>`);
-    requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));
-  }
-
-  try{
-    const tripContext=state.trips.length
-      ? `\n\n【用户当前已保存的行程】\n${JSON.stringify(state.trips,null,2)}`
-      : "\n\n【用户当前已保存的行程】暂无";
-
-    const system=`你是“旅伴旅行管家”的旅行 AI。
-你的任务是像一个真正的旅行规划助手一样解决问题，不要只给泛泛建议。
-回答优先结合用户当前行程；如果用户要求优化路线，要明确指出调整前后的顺序、时间和原因。
-如果信息不足，可以先给合理方案并说明需要补充什么。
-涉及路线时尽量给出：时间、地点、交通方式、预计耗时、餐饮/景点建议、注意事项。
-回答简洁但要有实质内容，适合手机阅读。
-不要讨论 Worker、Cloudflare、API Key、接口、后台配置等技术内容。
-不要使用“爸爸”等聊天称呼。${tripContext}`;
-
-    const messages=[{role:"system",content:system}].concat(state.messages.slice(-14));
-    const res=await fetch(AI_ENDPOINT,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({messages,temperature:.65})
-    });
-    const data=await res.json();
-    if(!res.ok)throw new Error(data.error||"AI 请求失败");
-
-    const answer=data?.choices?.[0]?.message?.content
-      ||data?.output?.choices?.[0]?.message?.content
-      ||"AI 暂时没有返回内容。";
-
-    state.messages.push({role:"assistant",content:answer});
-    saveAI();
-    renderAI();
-    requestAnimationFrame(()=>window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));
-  }catch(e){
-    state.messages.push({role:"assistant",content:"暂时没能完成这次请求，请稍后再试。"});
-    saveAI();
-    renderAI();
-    toast(e.message||"AI 请求失败");
-  }
+ const ta=document.querySelector('.aiComposer textarea');const text=ta.value.trim();if(!text)return;
+ ta.value='';const msgs=loadAI();msgs.push({role:'user',content:text});saveAI(msgs);renderAI();
+ const box=$('aiConversation');const loading=document.createElement('div');loading.className='aiBubble assistant loading';loading.textContent='正在思考';box.appendChild(loading);window.scrollTo(0,document.body.scrollHeight);
+ const system='你是旅伴旅行管家 AI。用户正在规划福建国庆旅行。当前方案：'+currentRoute+'。请围绕真实可执行的旅行规划回答，优先考虑时间、距离、交通衔接、景点开放时间和体力。可以提出添加景点、美食、酒店、交通，以及冲突检测和路线优化建议。不要讨论后台配置、API Key、Worker 或网页实现。回答简洁但有结构，适合手机聊天界面。';
+ try{
+  const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:system},...msgs],temperature:.7})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||'AI 请求失败');
+  const answer=d?.choices?.[0]?.message?.content||d?.output?.choices?.[0]?.message?.content||'AI 暂时没有返回内容。';
+  loading.remove();msgs.push({role:'assistant',content:answer});saveAI(msgs);renderAI();
+ }catch(e){
+  loading.remove();const err=document.createElement('div');err.className='aiBubble assistant';err.textContent='暂时无法连接 AI：'+e.message;box.appendChild(err);window.scrollTo(0,document.body.scrollHeight)
+ }
 }
-function renderMe(){document.getElementById("me").innerHTML=`<div class="section"><div class="sectionHead"><h3>我的</h3></div><div class="card"><b>本地数据</b><p class="small">行程和 AI 对话默认保存在当前设备，不需要注册即可使用。</p></div><div class="card"><b>当前版本</b><p class="small">旅伴旅行管家 · AI 接入版</p></div><button class="danger" onclick="localStorage.clear();location.reload()">清空本机数据</button></div>`}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function render(id){({home:renderHome,trip:renderTrip,cities:renderCities,food:renderFood,spots:renderSpots,ai:renderAI,me:renderMe}[id]||renderHome)()}
-renderHome();
+function composerHTML(){
+ const wrap=document.createElement('div');wrap.className='aiComposerWrap';wrap.innerHTML='<div class="aiComposer"><textarea placeholder="输入你想让 AI 做的事情，可直接说：帮我优化9月30日平潭北线"></textarea><button class="aiSend" onclick="sendAI()">↑</button></div><div class="aiComposerTools"><button class="aiMini" onclick="quickAI(\'优化当前路线\')">路线优化</button><button class="aiMini" onclick="quickAI(\'检查当前行程冲突\')">冲突检测</button><button class="aiMini" onclick="quickAI(\'帮我添加景点、美食或酒店\')">AI 添加</button></div><div class="aiHint">旅伴 AI · 旅行规划助手</div>';document.body.appendChild(wrap)
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ composerHTML();renderTrip();renderList('spot');renderList('food');renderHotels();renderTraffic();renderCities();renderAI();
+ document.querySelectorAll('.modalWrap').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)x.classList.remove('on')}));
+});
 </script>
 </body>
 </html>
