@@ -26,10 +26,7 @@ export async function onRequestGet({ env }) {
 
 export async function onRequestPost({ request, env }) {
   if (!env?.ARK_API_KEY || !env?.ARK_ENDPOINT_ID) {
-    return json({
-      error: "AI 后台尚未完成配置",
-      code: "ARK_CONFIG_MISSING"
-    }, 500);
+    return json({ error: "AI 后台尚未完成配置", code: "ARK_CONFIG_MISSING" }, 500);
   }
 
   let body;
@@ -40,9 +37,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   const messages = Array.isArray(body?.messages) ? body.messages : [];
-  if (!messages.length) {
-    return json({ error: "缺少 messages" }, 400);
-  }
+  if (!messages.length) return json({ error: "缺少 messages" }, 400);
 
   const payload = {
     model: env.ARK_ENDPOINT_ID,
@@ -63,11 +58,8 @@ export async function onRequestPost({ request, env }) {
 
     const text = await upstream.text();
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { error: text || "方舟接口返回了无法解析的内容" };
-    }
+    try { data = JSON.parse(text); }
+    catch { data = { error: text || "方舟接口返回了无法解析的内容" }; }
 
     if (!upstream.ok) {
       return json({
