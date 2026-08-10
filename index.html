@@ -38,4 +38,8 @@ function modal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;document.getE
 async function askAI(){const input=document.getElementById('aiInput'),text=input.value.trim();if(!text)return;input.value='';const box=document.getElementById('messages');box.insertAdjacentHTML('beforeend',`<div class="msg user">${e(text)}</div>`);const pending=document.createElement('div');pending.className='msg ai';pending.textContent='正在思考…';box.appendChild(pending);box.scrollTop=box.scrollHeight;try{const d=schedules[state.plan][state.day];const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context:{trip:'十一福建游',plan:state.plan,date:d.date,title:d.title,items:d.items}})});const j=await r.json();pending.textContent=j.reply||j.error||'AI 暂无回复';}catch(err){pending.textContent='AI 连接失败，请检查 Cloudflare Pages 的 ARK_API_KEY 与 ARK_ENDPOINT_ID。'}box.scrollTop=box.scrollHeight}document.getElementById('aiInput').addEventListener('keydown',x=>{if(x.key==='Enter'&&!x.shiftKey){x.preventDefault();askAI()}});
 function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({schedules,customTrips,hotels,spots,foods},null,2)],{type:'application/json'}));a.download='旅伴旅行管家备份.json';a.click()}function resetData(){localStorage.removeItem('lvban-trips');location.reload()}
 renderTrips();renderSpots();renderFoods();renderHotels();renderTransport();
-</script></body></html>
+</script>
+<script src="data.js"></script>
+<script src="storage.js"></script>
+<script src="pro.js"></script>
+</body></html>
