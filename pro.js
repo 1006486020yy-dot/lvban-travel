@@ -5,7 +5,6 @@
   const copy=t=>{t=String(t||'');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('已复制')).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('已复制')})};
   const nav=t=>{t=String(t||'').trim();if(!t)return toast('暂无地址');window.open('https://www.amap.com/search?query='+encodeURIComponent(t),'_blank','noopener')};
   const toast=t=>{let x=document.getElementById('lv-toast');if(!x){x=document.createElement('div');x.id='lv-toast';x.style='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:100;padding:11px 16px;border-radius:16px;background:rgba(20,20,35,.9);color:#fff;font-size:13px;opacity:0;transition:.2s';document.body.appendChild(x)}x.textContent=t;x.style.opacity=1;clearTimeout(x._t);x._t=setTimeout(()=>x.style.opacity=0,1600)};
-  const modal=html=>{document.getElementById('sheet').innerHTML=html;document.getElementById('modal').classList.add('show')};
   window.closeModal=()=>document.getElementById('modal').classList.remove('show');
   window.LvbanCopy=copy;window.LvbanNav=nav;
   function mergeCatalog(){
@@ -35,7 +34,43 @@
   function currentTrip(){return db.trips.find(x=>x.id===activeTrip)||db.trips[0]}
   function currentPlan(){const t=currentTrip();return t.plans.find(x=>x.id===activePlan)||t.plans[0]}
   function actionButtons(i){const a=i.address||'';return `<div class="actions"><button class="mini" onclick='LvbanCopy(${JSON.stringify(i.name)})'>复制名称</button><button class="mini" onclick='LvbanCopy(${JSON.stringify(a)})'>复制地址</button><button class="mini" onclick='LvbanNav(${JSON.stringify(a)})'>导航</button><button class="mini" onclick='openItemEditor(${i._index})'>编辑</button><button class="mini danger" onclick='deleteItem(${i._index})'>删除</button></div>`}
-  window.renderTripDetail=function(){const t=currentTrip(),p=currentPlan(),box=document.getElementById('tripDetail');if(!t||!p||!box)return;box.innerHTML=`<div class="scheme-head"><div><div class="crumb">我的行程 / <b>${safe(t.name)}</b> / ${safe(p.name)}</div><div class="scheme-name">${safe(p.name)}</div><div class="sub">${safe(t.city||'多城市旅行')} · ${t.people||1}人</div></div><div class="actions"><button class="mini" onclick="openPlanEditor()">方案管理</button><button class="mini primary" onclick="openDayEditor()">＋ 添加日程</button></div></div><div class="tabs" style="margin-top:10px">${t.plans.map(x=>`<button class="tab ${x.id===activePlan?'on':''}" onclick="switchPlan('${x.id}')">方案 ${x.id}</button>`).join('')}</div><div class="day-tabs">${p.days.map((d,k)=>`<button class="day-tab ${k===activeDay?'on':''}" onclick="activeDay=${k};renderTripDetail()"><b>${d.label}</b><small>${d.date}</small></button>`).join('')}</div><div class="card glass"><div class="crumb">${safe(p.days[activeDay].date)}</div><h3>${safe(p.days[activeDay].title)}</h3><div class="sub">每天独立编辑 · 景点 / 美食 / 酒店 / 火车 / 航班 / 交通 / 备注</div></div><div class="timeline">${p.days[activeDay].items.length?p.days[activeDay].items.map((i,k)=>{i._index=k;return `<div class="it-card glass"><div class="it-time">${safe(i.time||'未定时间')} <span class="it-type">${safe(i.type||'日程')}</span></div><div class="it-title">${safe(i.name)}</div><div class="it-address">📍 ${safe(i.address||'暂无地址')}</div>${i.budget?`<div class="data-meta">预算 ¥${i.budget}</div>`:''}${actionButtons(i)}</div>`}).join(''):'<div class="empty glass">今天还没有详细日程<br><button class="mini primary" style="margin-top:10px" onclick="openDayEditor()">＋ 添加第一条</button></div>'}</div><div class="day-footer"><span class="budget">当天预算：¥${p.days[activeDay].items.reduce((s,x)=>s+Number(x.budget||0),0)}</span><button class="mini primary" onclick="openDayEditor()">＋ 添加</button></div>`}
+  window.renderTripDetail=function(){const t=currentTrip(),p=currentPlan(),box=document.getElementById('tripDetail');if(!t||!p||!box)return;box.innerHTML=`<div class="scheme-head"><div><div class="crumb">${safe(t.name)} / ${safe(p.name)}</div><div class="scheme-name">${safe(p.name)}</div><div class="sub">${safe(t.city||'多城市旅行')} · ${t.people||1}人</div></div><div class="actions"><button class="mini" onclick="openPlanEditor()">方案管理</button><button class="mini primary" onclick="openDayEditor()">＋ 添加日程</button></div></div><div class="tabs" style="margin-top:10px">${t.plans.map(x=>`<button class="tab ${x.id===activePlan?'on':''}" onclick="switchPlan('${x.id}')">方案 ${x.id}</button>`).join('')}</div><div class="day-tabs">${p.days.map((d,k)=>`<button class="day-tab ${k===activeDay?'on':''}" onclick="activeDay=${k};renderTripDetail()"><b>${d.label}</b><small>${d.date}</small></button>`).join('')}</div><div class="card glass"><div class="crumb">${safe(p.days[activeDay].date)}</div><h3>${safe(p.days[activeDay].title)}</h3><div class="sub">每天独立编辑 · 景点 / 美食 / 酒店 / 火车 / 航班 / 交通 / 备注</div></div><div class="timeline">${p.days[activeDay].items.length?p.days[activeDay].items.map((i,k)=>{i._index=k;return `<div class="it-card glass"><div class="it-time">${safe(i.time||'未定时间')} <span class="it-type">${safe(i.type||'日程')}</span></div><div class="it-title">${safe(i.name)}</div><div class="it-address">📍 ${safe(i.address||'暂无地址')}</div>${i.budget?`<div class="data-meta">预算 ¥${i.budget}</div>`:''}${actionButtons(i)}</div>`}).join(''):'<div class="empty glass">今天还没有详细日程<br><button class="mini primary" style="margin-top:10px" onclick="openDayEditor()">＋ 添加第一条</button></div>'}</div><div class="day-footer"><span class="budget">当天预算：¥${p.days[activeDay].items.reduce((s,x)=>s+Number(x.budget||0),0)}</span><button class="mini primary" onclick="openDayEditor()">＋ 添加</button></div>`}
   window.renderTrips=function(){document.getElementById('tripList').innerHTML=db.trips.map(t=>`<button class="trip-card ${t.id===activeTrip?'active':''}" onclick="selectTrip('${t.id}')"><strong>${safe(t.name)}</strong><small>${safe(t.city||'多城市')}<br>${safe(t.start||'')} → ${safe(t.end||'')}</small></button>`).join('')+`<button class="trip-card" onclick="openNewTrip()"><strong>＋ 新建行程</strong><small>只填写基础信息，自动生成 DAY</small></button>`;renderTripDetail()};
   mergeCatalog();normalizeItems();renderHome();renderSpots();renderFoods();renderTrips();
+
+  /* 行程列表操作补充：明确的新建入口 + 删除入口 */
+  const baseRenderTrips=window.renderTrips;
+  window.deleteTrip=function(id){
+    const t=(db.trips||[]).find(x=>x.id===id);
+    if(!t)return;
+    if((db.trips||[]).length<=1){toast('至少保留一个行程');return;}
+    if(!confirm('确定删除「'+(t.name||'这个行程')+'」吗？删除后不可恢复。'))return;
+    db.trips=db.trips.filter(x=>x.id!==id);
+    activeTrip=db.trips[0]?.id||null;
+    const first=db.trips[0];
+    activePlan=first?.plans?.[0]?.id||null;activeDay=0;
+    save();baseRenderTrips();toast('行程已删除');
+  };
+  window.renderTrips=function(){
+    baseRenderTrips();
+    const list=document.getElementById('tripList');
+    if(!list)return;
+    const bar=document.createElement('div');
+    bar.className='trip-list-actions';
+    bar.style='display:flex;justify-content:flex-end;gap:8px;margin:0 0 12px;position:sticky;top:66px;z-index:10';
+    bar.innerHTML='<button class="mini primary" style="padding:11px 16px;border-radius:14px;box-shadow:0 8px 20px rgba(105,88,245,.18)" onclick="openNewTrip()">＋ 新建行程</button>';
+    list.parentNode.insertBefore(bar,list);
+    list.querySelectorAll('.trip-card').forEach((card,index)=>{
+      if(index >= (db.trips||[]).length)return;
+      const t=db.trips[index];
+      card.style.position='relative';
+      card.style.paddingRight='72px';
+      const del=document.createElement('button');
+      del.className='mini danger trip-delete';
+      del.textContent='删除';
+      del.style='position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:7px 9px;border-radius:10px;z-index:3';
+      del.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();deleteTrip(t.id)};
+      card.appendChild(del);
+    });
+  };
 })();
