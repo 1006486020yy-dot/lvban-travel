@@ -1,53 +1,121 @@
-/* 旅伴旅行管家 UI 修复层 */
+/* 旅伴旅行管家 · 行程架构重做
+   目标：列表页 → 全屏行程画布；不展示“一级/二级类目”文字；日期可点击；唯一悬浮创建入口。
+*/
 (function(){
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
   const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const toastMsg=t=>{if(window.toast) return window.toast(t);let x=document.getElementById('lv-toast');if(!x){x=document.createElement('div');x.id='lv-toast';x.style='position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:200;padding:10px 14px;border-radius:14px;background:#222;color:#fff;font-size:13px';document.body.appendChild(x)}x.textContent=t;clearTimeout(x._t);x.style.opacity=1;x._t=setTimeout(()=>x.style.opacity=0,1400)};
-  function css(){
-    if(document.getElementById('lv-fix-style'))return;
-    const s=document.createElement('style');s.id='lv-fix-style';s.textContent=`
-      .bottom{grid-template-columns:repeat(6,1fr)!important;max-width:720px}
-      .bottom .create-tab{background:linear-gradient(135deg,#6958f5,#8c78ff)!important;color:#fff!important;border-radius:18px!important;transform:translateY(-8px);box-shadow:0 8px 20px rgba(105,88,245,.28)}
-      .bottom .create-tab strong{font-size:25px!important;line-height:20px}
-      .trip-card,.plan,.day,.tab,.day-tab{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
-      .trip-card:active,.plan:active,.day:active,.tab:active,.day-tab:active{transform:scale(.985)}
-      .create-flow{display:grid;gap:14px}.create-step{padding:14px 15px;border-radius:18px;background:#f0eeff}.create-step span{display:block;color:#77788b;font-size:12px;margin-top:4px;line-height:1.5}.choice-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice{padding:13px;border-radius:15px;background:#fff;border:1px solid #e8e6f4;color:#555;font-weight:700}.choice.on{background:#efedff;border:2px solid #6958f5;color:#5d4de5}.ai-quick{display:flex;gap:8px;overflow:auto;padding:3px 0 8px}.ai-quick button{white-space:nowrap;background:#f1efff;color:#5d4de5;border-radius:14px;padding:9px 12px}.ai-title{display:flex;align-items:center;gap:10px}.ai-orb{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#6958f5,#9b7af5);display:grid;place-items:center;color:#fff;font-size:21px}.ai-subtitle{color:#77788b;font-size:12px;margin-top:4px}.msg.ai{box-shadow:0 4px 18px rgba(50,45,100,.05)}
-    `;document.head.appendChild(s);
+  const toast=m=>{if(window.toast)return window.toast(m);alert(m)};
+  const copy=t=>{if(!t)return toast('暂无可复制内容');navigator.clipboard?.writeText(t).then(()=>toast('已复制')).catch(()=>toast(t));};
+  const nav=a=>{if(!a)return toast('暂无地址');location.href='https://www.amap.com/search?query='+encodeURIComponent(a)};
+  window._tripUI={city:'全部',type:'全部',openDays:{}};
+
+  function trip(){return window.currentTrip?.()||window.db?.trips?.[0]}
+  function plan(){return window.currentPlan?.()||trip()?.plans?.[0]}
+  function day(){return plan()?.days?.[window._tripUI.day??0]||plan()?.days?.[0]}
+
+  function renderList(){
+    const page=$('#trips'); if(!page)return;
+    page.innerHTML=`
+      <div class="trip-list-page">
+        <div class="trip-tabs"><button class="trip-tab active" data-tab="mine">我的行程</button><button class="trip-tab" data-tab="discover">发现灵感</button></div>
+        <div id="tripCards" class="trip-cards"></div>
+        <div class="trip-empty" id="tripEmpty" hidden><div class="empty-icon">🧳</div><h3>还没有行程</h3><p>创建一个行程，把日期、景点、美食和交通放在一起。</p><button class="trip-create-inline" onclick="window.openNewTrip()">创建我的第一个行程</button></div>
+        <button class="trip-fab" onclick="window.openNewTrip()" aria-label="创建行程"><span>＋</span><b>创建行程</b></button>
+      </div>`;
+    renderCards();
+    $$('.trip-tab').forEach(b=>b.onclick=()=>{$$('.trip-tab').forEach(x=>x.classList.toggle('active',x===b)); if(b.dataset.tab==='discover')renderDiscover();else renderCards();});
   }
-  function cleanTripLabels(){
-    document.querySelectorAll('#tripDetail .crumb,#tripDetail .trip-level,#tripList .crumb,#tripList .trip-level').forEach(el=>{
-      const t=(el.textContent||'').trim();
-      if(/一级类目|二级类目|三级类目/.test(t))el.remove();
-    });
+
+  function renderCards(){
+    const box=$('#tripCards');if(!box)return;
+    const trips=window.db?.trips||[];
+    $('#tripEmpty').hidden=trips.length>0;
+    box.innerHTML=trips.map((t,i)=>{
+      const p=t.plans?.[0], days=p?.days||[];
+      const count=days.reduce((n,d)=>n+(d.items?.length||0),0);
+      const cover= t.city||'福建';
+      return `<button class="trip-card" onclick="window.openTripCanvas('${esc(t.id)}')">
+        <div class="trip-card-cover"><span>${esc(cover)}</span><i>${days.length||0}天</i></div>
+        <div class="trip-card-body"><h3>${esc(t.name||'未命名行程')}</h3><p>${esc(t.start||'')} ${t.end?'— '+esc(t.end):''}</p><div class="trip-card-meta"><span>${esc(t.plans?.map(x=>x.name).join(' / ')||'方案 A')}</span><span>${count} 个安排</span></div></div>
+      </button>`;
+    }).join('');
   }
-  function setupBottom(){
-    const nav=document.querySelector('.bottom');if(!nav)return;
-    nav.innerHTML=`<button data-page="home" onclick="go('home')"><strong>⌂</strong>首页</button><button data-page="trips" onclick="go('trips')"><strong>☷</strong>行程</button><button class="create-tab" onclick="openNewTrip()" aria-label="创建行程"><strong>＋</strong>创建</button><button data-page="spots" onclick="go('spots')"><strong>⌖</strong>景点</button><button data-page="food" onclick="go('food')"><strong>●</strong>美食</button><button data-page="ai" onclick="go('ai')"><strong>✦</strong>AI</button>`;
-    const active=document.querySelector('.page.active')?.id||'home';nav.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('on',x.dataset.page===active));
+  function renderDiscover(){
+    const box=$('#tripCards');if(!box)return;
+    box.innerHTML=`<div class="discover-card"><div class="discover-hero">🌊 福建海岸线</div><h3>海岛＋古城＋厦门</h3><p>把平潭的海、泉州的古城和厦门的慢生活串起来。</p><button class="trip-create-inline" onclick="window.openNewTrip()">用这个思路创建</button></div><div class="discover-card"><div class="discover-hero">🏝️ 厦门慢旅行</div><h3>鼓浪屿＋集美＋城市漫游</h3><p>少搬行李，多留时间给海边和城市。</p><button class="trip-create-inline" onclick="window.openNewTrip()">用这个思路创建</button></div>`;
   }
-  const oldGo=window.go;
-  window.go=function(id){oldGo?.(id);setTimeout(()=>{setupBottom();cleanTripLabels();if(id==='ai')setupAI();},0)};
-  const oldRender=window.renderTrips;
-  window.renderTrips=function(){oldRender?.();setTimeout(()=>{cleanTripLabels();setupBottom();},0)};
-  function setupAI(){
-    const page=document.getElementById('ai');if(!page)return;
-    const title=page.querySelector('.title');if(title){title.innerHTML=`<div class="ai-title"><div class="ai-orb">✦</div><div><h2 style="margin:0">旅伴 AI</h2><div class="ai-subtitle">你的专属旅行规划助手</div></div></div>`;}
-    const oldQuick=page.querySelector('.ai-quick');if(!oldQuick){
-      const panel=page.querySelector('.panel');if(panel){const q=document.createElement('div');q.className='ai-quick';q.innerHTML=['帮我优化今天行程','方案 A 和 B 怎么选','把这个景点加入行程','帮我安排厦门一天'].map(t=>`<button onclick="aiQuick(${JSON.stringify(t)})">${t}</button>`).join('');panel.insertBefore(q,panel.firstChild);}
-    }
-    const composer=page.querySelector('.composer');if(composer){const ta=page.querySelector('#aiInput');if(ta)ta.placeholder='告诉我你的旅行需求，例如：把10月2日安排得轻松一点';}
-    page.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&/火山方舟|已接\\s*\/api\/ai/.test(el.textContent||''))el.textContent='';});
-  }
-  window.aiQuick=function(text){const i=document.getElementById('aiInput');if(i){i.value=text;window.askAI?.();}};
-  window.askAI=async function(){
-    const input=document.getElementById('aiInput'),box=document.getElementById('messages');if(!input||!box)return;const text=input.value.trim();if(!text)return;input.value='';box.insertAdjacentHTML('beforeend',`<div class="msg user">${esc(text)}</div>`);const pending=document.createElement('div');pending.className='msg ai';pending.textContent='正在思考…';box.appendChild(pending);box.scrollTop=box.scrollHeight;
-    try{
-      const t=window.currentTrip?.(),p=window.currentPlan?.(),d=p?.days?.[window.activeDay||0];
-      const context=d?`旅行：${t?.name||'未命名'}\n方案：${p?.name||'方案 A'}\n日期：${d.date}\n当天主题：${d.title}\n当天行程：${JSON.stringify(d.items||[])}`:'';
-      const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:text}],tripContext:context})});
-      const j=await r.json();pending.textContent=j.reply||'暂时没有得到回复，请稍后再试。';
-    }catch(e){pending.textContent='AI 暂时连接不上，请稍后再试。';}
-    box.scrollTop=box.scrollHeight;
+
+  window.openTripCanvas=function(id){
+    window.activeTrip=id; const t=trip(); window.activePlan=t?.plans?.[0]?.id||'A'; window._tripUI.day=0; window._tripUI.city='全部';window._tripUI.type='全部';
+    renderCanvas();
   };
-  function init(){css();setupBottom();cleanTripLabels();setupAI();setTimeout(()=>{setupBottom();cleanTripLabels();setupAI();},250);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+
+  function renderCanvas(){
+    const page=$('#trips');if(!page)return;const t=trip();if(!t)return renderList();
+    page.innerHTML=`<div class="trip-canvas">
+      <div class="canvas-top"><button class="back-btn" onclick="window.renderTrips()">‹</button><div><h2>${esc(t.name)}</h2><p>${esc(t.city||'')}</p></div><button class="canvas-more" onclick="window.openPlanEditor()">⋯</button></div>
+      <div class="plan-switch"><button class="canvas-plan active" data-plan="A">方案 A</button><button class="canvas-plan" data-plan="B">方案 B</button></div>
+      <div class="filter-scroll"><button class="filter active" data-filter="city:全部">全部城市</button><button class="filter" data-filter="city:福州">福州</button><button class="filter" data-filter="city:平潭">平潭</button><button class="filter" data-filter="city:泉州">泉州</button><button class="filter" data-filter="city:厦门">厦门</button><button class="filter" data-filter="type:景点">景点</button><button class="filter" data-filter="type:美食">美食</button><button class="filter" data-filter="type:交通">交通</button><button class="filter" data-filter="type:酒店">酒店</button></div>
+      <div id="canvasDays" class="canvas-days"></div>
+    </div>`;
+    renderCanvasDays();
+    $$('.canvas-plan').forEach(b=>b.onclick=()=>{window.activePlan=b.dataset.plan;window._tripUI.day=0;$$('.canvas-plan').forEach(x=>x.classList.toggle('active',x===b));renderCanvasDays();});
+    $$('.filter').forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.filter.split(':');window._tripUI.city=k==='city'?v:window._tripUI.city;window._tripUI.type=k==='type'?v:'全部';$$('.filter').forEach(x=>x.classList.toggle('active',x===b));renderCanvasDays();});
+  }
+
+  function renderCanvasDays(){
+    const box=$('#canvasDays');if(!box)return;const p=plan();if(!p)return;
+    box.innerHTML=(p.days||[]).map((d,i)=>{
+      const isOpen=window._tripUI.openDays[d.id]!==false && (window._tripUI.openDays[d.id]===true || i===window._tripUI.day);
+      const items=(d.items||[]).filter(x=>(window._tripUI.city==='全部'||x.city===window._tripUI.city)&&(window._tripUI.type==='全部'||x.type===window._tripUI.type));
+      return `<section class="day-fold ${isOpen?'open':''}">
+        <button class="day-head" onclick="window.toggleTripDay(${i})"><span><b>${esc(d.date||'')}</b><strong>${esc(d.title||'DAY '+(i+1))}</strong></span><em>${items.length}项 ${isOpen?'⌃':'⌄'}</em></button>
+        <div class="day-body">${items.length?items.map((x,idx)=>eventHtml(x,idx)).join(''):`<div class="day-empty">这一天还没有符合筛选条件的安排</div>`}<button class="add-day-btn" onclick="window._tripUI.day=${i};window.openDayEditor()">＋ 添加日程</button></div>
+      </section>`;
+    }).join('');
+  }
+  function eventHtml(x,idx){return `<article class="timeline-item"><div class="time-col">${esc(x.time||'')}</div><div class="event-card"><div class="event-top"><span class="event-type">${esc(x.type||'行程')}</span><button class="event-menu" onclick="window.editCurrentEvent('${esc(x.id||'')}')">⋯</button></div><h3>${esc(x.name||'未命名')}</h3>${x.address?`<p class="event-address">📍 ${esc(x.address)}</p>`:''}${x.note?`<p class="event-note">${esc(x.note)}</p>`:''}<div class="event-actions">${x.address?`<button onclick="window.copyTripText('${encodeURIComponent(x.address)}')">复制地址</button><button onclick="window.navTripText('${encodeURIComponent(x.address)}')">导航</button>`:''}<button onclick="window.editCurrentEvent('${esc(x.id||'')}')">编辑</button></div></div></article>`}
+  window.toggleTripDay=i=>{const d=plan()?.days?.[i];if(!d)return;window._tripUI.day=i;window._tripUI.openDays[d.id]=window._tripUI.openDays[d.id]===false;renderCanvasDays();};
+  window.copyTripText=s=>copy(decodeURIComponent(s)); window.navTripText=s=>nav(decodeURIComponent(s));
+  window.editCurrentEvent=id=>{const d=plan()?.days?.[window._tripUI.day];const idx=(d?.items||[]).findIndex(x=>x.id===id);if(idx>=0)window.openItemEditor(idx);};
+
+  // Full-screen create/edit canvas: reuse existing form logic, but turn the modal into a full-page workspace.
+  const oldOpenNew=window.openNewTrip;
+  window.openNewTrip=function(){
+    oldOpenNew?.();
+    setTimeout(()=>{
+      const m=$('#modal'),s=m?.querySelector('.sheet');if(!m||!s)return;
+      m.classList.add('trip-fullscreen');
+      const close=m.querySelector('.title button'); if(close)close.textContent='取消';
+    },0);
+  };
+  const oldOpenDay=window.openDayEditor;
+  window.openDayEditor=function(){oldOpenDay?.();setTimeout(()=>{$('#modal')?.classList.add('trip-fullscreen')},0)};
+  const oldItem=window.openItemEditor;
+  window.openItemEditor=function(i){oldItem?.(i);setTimeout(()=>{$('#modal')?.classList.add('trip-fullscreen')},0)};
+  const oldClose=window.closeModal;
+  window.closeModal=function(){const m=$('#modal');m?.classList.remove('trip-fullscreen');oldClose?.();};
+
+  // Prevent legacy breadcrumb/category labels from appearing anywhere in the trip detail.
+  const cleanLegacy=()=>{$$('.crumb,.trip-level').forEach(x=>x.remove());$$('.trip-head').forEach(x=>x.classList.remove('trip-head'));};
+  window.renderTrips=renderList;
+  window.renderTripDetail=renderCanvas;
+  window.selectTrip=id=>window.openTripCanvas(id);
+  window.switchPlan=id=>{window.activePlan=id;renderCanvas()};
+
+  // Inject the visual system once.
+  if(!$('#trip-architecture-style')){
+    const st=document.createElement('style');st.id='trip-architecture-style';st.textContent=`
+      #trips{padding:0!important}.trip-list-page{min-height:calc(100vh - 150px);padding:14px 2px 90px}.trip-tabs{display:flex;gap:24px;border-bottom:1px solid var(--line);padding:4px 4px 0;margin-bottom:16px}.trip-tab{background:none;padding:10px 2px 13px;font-size:18px;font-weight:800;color:#9898a8;position:relative}.trip-tab.active{color:var(--text)}.trip-tab.active:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:var(--p)}
+      .trip-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.trip-card{padding:0;overflow:hidden;text-align:left;background:#fff;border:1px solid #eeeafa;border-radius:24px;box-shadow:0 12px 30px #403a8a10}.trip-card-cover{height:120px;padding:14px;display:flex;justify-content:space-between;align-items:flex-end;background:linear-gradient(135deg,#7261f7,#45b991);color:#fff}.trip-card-cover span{font-size:14px;font-weight:800}.trip-card-cover i{font-style:normal;font-size:12px;background:#ffffff35;padding:5px 8px;border-radius:10px}.trip-card-body{padding:14px}.trip-card-body h3{margin:0 0 6px;font-size:17px}.trip-card-body p{margin:0;color:var(--muted);font-size:12px}.trip-card-meta{display:flex;justify-content:space-between;margin-top:12px;font-size:11px;color:#7164d9}.trip-fab{position:fixed;z-index:45;right:22px;bottom:88px;width:58px;height:58px;border-radius:50%;background:var(--p);color:#fff;box-shadow:0 14px 30px #6958f555;display:flex;align-items:center;justify-content:center;flex-direction:column}.trip-fab span{font-size:24px;line-height:20px}.trip-fab b{font-size:8px;margin-top:2px}.trip-empty{text-align:center;padding:70px 20px}.empty-icon{font-size:44px}.trip-create-inline{padding:11px 15px;border-radius:14px;background:var(--p);color:#fff;font-weight:800}.discover-card{background:#fff;border-radius:24px;padding:14px;box-shadow:0 10px 28px #403a8a10}.discover-card+.discover-card{margin-top:12px}.discover-hero{height:110px;border-radius:18px;background:linear-gradient(135deg,#75bde8,#7a68f7);display:flex;align-items:center;justify-content:center;font-size:30px}.discover-card h3{margin:13px 0 5px}.discover-card p{color:var(--muted);font-size:12px;line-height:1.6}
+      .trip-canvas{min-height:calc(100vh - 90px);padding:8px 2px 100px}.canvas-top{display:flex;align-items:center;gap:10px;padding:10px 2px 14px}.canvas-top h2{margin:0;font-size:22px}.canvas-top p{margin:4px 0 0;color:var(--muted);font-size:11px}.back-btn,.canvas-more{width:40px;height:40px;border-radius:14px;background:#fff;font-size:25px}.canvas-top>div{flex:1}.canvas-more{font-size:22px}.plan-switch{display:flex;gap:8px;margin-bottom:10px}.canvas-plan{flex:1;padding:12px;border-radius:15px;background:#fff;color:#777;font-weight:800}.canvas-plan.active{background:var(--p);color:#fff}.filter-scroll{display:flex;gap:7px;overflow:auto;padding:3px 0 12px}.filter{flex:0 0 auto;padding:8px 11px;border-radius:13px;background:#fff;color:#777;font-size:11px}.filter.active{background:#efedff;color:var(--p);font-weight:800}.day-fold{background:#ffffffc9;border:1px solid #fff;border-radius:20px;margin:10px 0;overflow:hidden}.day-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;text-align:left;padding:14px 15px}.day-head span{display:flex;align-items:center;gap:10px}.day-head b{font-size:13px;color:var(--p)}.day-head strong{font-size:15px}.day-head em{font-style:normal;font-size:11px;color:var(--muted)}.day-body{display:none;padding:0 12px 13px}.day-fold.open .day-body{display:block}.timeline-item{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:9px 0}.time-col{font-size:11px;font-weight:800;color:var(--p);padding-top:13px;text-align:right}.event-card{background:#f8f8fc;border-radius:18px;padding:12px}.event-top{display:flex;justify-content:space-between}.event-type{font-size:9px;color:var(--p);background:#efedff;padding:4px 7px;border-radius:8px}.event-menu{background:none;color:#999}.event-card h3{margin:7px 0 4px;font-size:15px}.event-address,.event-note{margin:0;color:var(--muted);font-size:11px;line-height:1.5}.event-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.event-actions button{padding:6px 8px;border-radius:9px;background:#fff;color:#5d4de5;font-size:10px}.day-empty{text-align:center;color:var(--muted);font-size:11px;padding:20px}.add-day-btn{width:100%;padding:10px;border-radius:12px;background:#efedff;color:var(--p);font-weight:800}.trip-fullscreen{align-items:stretch!important}.trip-fullscreen .sheet{height:100%;max-height:none;border-radius:0;padding:18px;overflow:auto}.trip-fullscreen .sheet .title{position:sticky;top:0;background:#f7f8fc;z-index:2;padding-bottom:10px}.trip-fullscreen .form{max-width:760px;margin:0 auto}.trip-fullscreen .create-flow{max-width:760px;margin:0 auto}.create-step{padding:13px;background:#fff;border-radius:15px;margin-bottom:12px}.create-step b{display:block}.create-step span{display:block;color:var(--muted);font-size:11px;margin-top:4px}.choice-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice{padding:12px;border-radius:14px;background:#fff;border:1px solid var(--line);font-weight:700}.choice.on{border-color:var(--p);background:#efedff;color:var(--p)}
+      @media(max-width:760px){.trip-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.trip-card-cover{height:105px}.trip-card-body{padding:11px}.trip-card-body h3{font-size:15px}.trip-fab{right:16px}.canvas-top{padding-top:4px}}
+    `;document.head.appendChild(st);
+  }
+
+  // Patch page navigation so returning to 行程 always shows the list first.
+  const oldGo=window.go;
+  window.go=function(id){oldGo?.(id);if(id==='trips')setTimeout(renderList,0);};
+  // Initial render after storage + inline scripts are ready.
+  setTimeout(()=>{if($('#trips'))renderList();},50);
 })();
