@@ -2,12 +2,62 @@
  const KEY='lvban_pro_store_v1';
  const defaults={trips:[],favorites:{spots:[],foods:[],hotels:[],other:[]},settings:{},aiMemory:[],tools:{}};
  function load(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){return JSON.parse(JSON.stringify(defaults));}}
- function save(s){localStorage.setItem(KEY,JSON.stringify(s));return s;}
+ function saveStore(s){localStorage.setItem(KEY,JSON.stringify(s));return s;}
  window.LvbanStore={
-  key:KEY,load,save,get(){return load()},patch(fn){const s=load();fn(s);return save(s)},
+  key:KEY,load,save:saveStore,get(){return load()},patch(fn){const s=load();fn(s);return saveStore(s)},
   export(){const blob=new Blob([JSON.stringify(load(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lvban-backup-'+Date.now()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)},
-  importFile(file,done){const r=new FileReader();r.onload=()=>{try{save(JSON.parse(r.result));done&&done(true)}catch(e){done&&done(false)}};r.readAsText(file)},
+  importFile(file,done){const r=new FileReader();r.onload=()=>{try{saveStore(JSON.parse(r.result));done&&done(true)}catch(e){done&&done(false)}};r.readAsText(file)},
   fav(type,id){return this.patch(s=>{s.favorites[type] ||= [];const a=s.favorites[type],i=a.indexOf(id);i<0?a.push(id):a.splice(i,1)})},
   isFav(type,id){return load().favorites[type]?.includes(id)}
  };
+
+ const uid=()=>('lv-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7));
+ window.uid=uid;
+ function dayMap(arr){return (arr||[]).map((d,i)=>({id:uid(),label:'DAY '+i,date:d.date,title:d.title,items:(d.items||[]).map(x=>({id:uid(),time:x[0]||'09:00',name:x[1]||'',address:x[2]||'',city:guessCity(x[2]||''),type:guessType(x[1]||''),budget:0,note:x[3]||''}))}));}
+ function guessCity(a){if(/福州/.test(a))return '福州';if(/平潭/.test(a))return '平潭';if(/泉州|石狮/.test(a))return '泉州';return '厦门';}
+ function guessType(n){return /酒店/.test(n)?'酒店':/D\\d+|C\\d+|高铁|动车|前往|机场|车站/.test(n)?'交通':/店|餐|美食|粥|面|牛排|肉粽|沙茶|五香|花生汤|麻糍/.test(n)?'美食':'景点';}
+ function makeMainTrip(){
+   const schedules=window.schedules||{};
+   const a=schedules.A||[],b=schedules.B||[];
+   return {id:'trip-main',name:'十一福建游',city:'福州 · 平潭 · 泉州 · 厦门',start:'2026-09-28',end:'2026-10-04',people:1,plans:[{id:'A',name:'方案 A',days:dayMap(a)},{id:'B',name:'方案 B',days:dayMap(b)}]};
+ }
+ const existing=load();
+ window.db={
+   trips:Array.isArray(existing.trips)&&existing.trips.length?existing.trips:[makeMainTrip()],
+   spots:(window.LVBAN_DATA?.spots||[]).map(x=>({...x})),
+   foods:(window.LVBAN_DATA?.foods||[]).map(x=>({...x})),
+   hotels:[],favorites:existing.favorites||{spots:[],foods:[],hotels:[],other:[]}
+ };
+ window.activeTrip=window.db.trips[0]?.id||'trip-main';
+ window.activePlan=window.db.trips[0]?.plans?.[0]?.id||'A';
+ window.activeDay=0;
+ window.save=function(){saveStore({...load(),trips:window.db.trips,favorites:window.db.favorites||load().favorites});};
+ window.currentTrip=()=>window.db.trips.find(x=>x.id===window.activeTrip)||window.db.trips[0];
+ window.currentPlan=()=>{const t=window.currentTrip();return t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0];};
+ window.selectTrip=function(id){window.activeTrip=id;const t=window.currentTrip();window.activePlan=t?.plans?.[0]?.id||'A';window.activeDay=0;window.renderTrips?.();};
+ window.switchPlan=function(id){window.activePlan=id;window.activeDay=0;window.renderTripDetail?.();};
+ window.openNewTrip=function(){
+   const m=document.getElementById('modal');if(!m)return;
+   document.getElementById('modalTitle').textContent='创建新行程';
+   document.getElementById('modalBody').innerHTML=`<div class="create-flow"><div class="create-step on"><b>① 基础信息</b><span>先告诉旅伴这趟旅行叫什么、去哪、哪天出发</span></div><div class="form"><label>行程名称</label><input id="ntName" placeholder="例如：国庆厦门慢旅行"><label>目的地</label><input id="ntCity" placeholder="例如：厦门 / 福建四城"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>开始日期</label><input id="ntStart" type="date"></div><div><label>结束日期</label><input id="ntEnd" type="date"></div></div><label>接下来怎么规划？</label><div class="choice-row"><button type="button" class="choice on" data-mode="manual" onclick="pickCreateMode('manual')">我自己安排</button><button type="button" class="choice" data-mode="ai" onclick="pickCreateMode('ai')">让 AI 帮我规划</button></div><button class="btn primary" style="padding:13px;margin-top:6px" onclick="createTripFromForm()">创建行程</button></div></div>`;
+   m.classList.add('show');
+ };
+ window.pickCreateMode=function(mode){document.querySelectorAll('.choice').forEach(x=>x.classList.toggle('on',x.dataset.mode===mode));window._createMode=mode;};
+ window.createTripFromForm=function(){
+   const name=document.getElementById('ntName').value.trim(),city=document.getElementById('ntCity').value.trim(),start=document.getElementById('ntStart').value,end=document.getElementById('ntEnd').value;
+   if(!name||!start||!end)return window.toast?.('请填写行程名称和日期');
+   if(end<start)return window.toast?.('结束日期不能早于开始日期');
+   const days=[];let d=new Date(start+'T00:00:00'),last=new Date(end+'T00:00:00'),i=0;while(d<=last&&i<31){const iso=d.toISOString().slice(0,10);days.push({id:uid(),label:'DAY '+i,date:iso,title:'待安排',items:[]});d.setDate(d.getDate()+1);i++;}
+   const t={id:uid(),name,city:city||'未设置目的地',start,end,people:1,plans:[{id:'A',name:'方案 A',days},{id:'B',name:'方案 B',days:JSON.parse(JSON.stringify(days))}]};
+   window.db.trips.push(t);window.activeTrip=t.id;window.activePlan='A';window.activeDay=0;window.save();window.closeModal?.();window.go?.('trips');window.renderTrips?.();window.toast?.('行程创建成功');
+   if(window._createMode==='ai')setTimeout(()=>window.go?.('ai'),120);
+ };
+ window.openDayEditor=function(){const p=window.currentPlan(),d=p?.days?.[window.activeDay];if(!d)return;document.getElementById('modalTitle').textContent='添加日程';document.getElementById('modalBody').innerHTML=`<div class="form"><label>时间</label><input id="diTime" type="time" value="09:00"><label>安排什么？</label><input id="diName" placeholder="例如：南普陀寺"><label>地址</label><input id="diAddr" placeholder="可复制、可导航的完整地址"><label>备注</label><textarea id="diNote" placeholder="交通、门票、餐饮等"></textarea><button class="btn primary" onclick="saveDayItem()">加入当天行程</button></div>`;document.getElementById('modal').classList.add('show');};
+ window.saveDayItem=function(){const d=window.currentPlan()?.days?.[window.activeDay];if(!d)return;const n=document.getElementById('diName').value.trim();if(!n)return window.toast?.('请填写日程名称');d.items.push({id:uid(),time:document.getElementById('diTime').value||'09:00',name:n,address:document.getElementById('diAddr').value.trim(),city:guessCity(document.getElementById('diAddr').value),type:guessType(n),budget:0,note:document.getElementById('diNote').value.trim()});d.items.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));window.save();window.closeModal?.();window.renderTripDetail?.();};
+ window.openItemEditor=function(i){const d=window.currentPlan()?.days?.[window.activeDay],x=d?.items?.[i];if(!x)return;document.getElementById('modalTitle').textContent='编辑日程';document.getElementById('modalBody').innerHTML=`<div class="form"><label>时间</label><input id="eiTime" type="time" value="${String(x.time||'').replace(/"/g,'&quot;')}"><label>名称</label><input id="eiName" value="${String(x.name||'').replace(/"/g,'&quot;')}"><label>地址</label><input id="eiAddr" value="${String(x.address||'').replace(/"/g,'&quot;')}"><label>备注</label><textarea id="eiNote">${x.note||''}</textarea><button class="btn primary" onclick="saveItemEdit(${i})">保存修改</button></div>`;document.getElementById('modal').classList.add('show');};
+ window.saveItemEdit=function(i){const x=window.currentPlan()?.days?.[window.activeDay]?.items?.[i];if(!x)return;x.time=document.getElementById('eiTime').value||x.time;x.name=document.getElementById('eiName').value.trim();x.address=document.getElementById('eiAddr').value.trim();x.note=document.getElementById('eiNote').value.trim();window.save();window.closeModal?.();window.renderTripDetail?.();};
+ window.deleteItem=function(i){const d=window.currentPlan()?.days?.[window.activeDay];if(!d)return;if(confirm('删除这条日程？')){d.items.splice(i,1);window.save();window.renderTripDetail?.();}};
+ window.openPlanEditor=function(){const p=window.currentPlan();if(!p)return;document.getElementById('modalTitle').textContent='方案名称';document.getElementById('modalBody').innerHTML=`<div class="form"><label>方案名称</label><input id="pn" value="${p.name}"><button class="btn primary" onclick="currentPlan().name=document.getElementById('pn').value.trim()||currentPlan().name;save();closeModal();renderTripDetail()">保存</button></div>`;document.getElementById('modal').classList.add('show');};
+
+ const fix=document.createElement('script');fix.src='ui-fixes.js?v=20260810';document.head.appendChild(fix);
 })();
