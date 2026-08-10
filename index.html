@@ -319,5 +319,9 @@ function openModal(content){document.getElementById("sheet").innerHTML=content;d
 function clearLocal(){if(confirm("确定清空本地新增行程吗？")){customTrips=[];localStorage.removeItem("customTrips");renderTrips()}}
 renderTrips();renderSpots();renderFood();renderHotels();renderTransport();
 </script>
+
+<script src="data.js"></script>
+<script src="storage.js"></script>
+<script src="pro.js"></script>
 </body>
 </html>
