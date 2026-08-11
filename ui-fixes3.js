@@ -7,7 +7,7 @@
     s.src='final-trip-fix.js?v=20260811-final5';
     s.onload=function(){
       var c=document.createElement('script');
-      c.src='create-trip-fix.js?v=20260811-v2';
+      c.src='create-trip-fix.js?v=20260811-v3';
       document.head.appendChild(c);
     };
     document.head.appendChild(s);
