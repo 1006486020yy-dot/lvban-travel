@@ -11,6 +11,11 @@
     if(!Array.isArray(trips))return;
     let changed=false;
     trips.forEach(t=>{
+      // 旧版本已经存在的“十一福建游”就是明确的 A/B 双路线，补上标记，避免被误删 B。
+      if(t.id==='trip-main' && t.hasAlternateRoutes==null && Array.isArray(t.plans) && t.plans.length>1){
+        t.hasAlternateRoutes=true;
+        changed=true;
+      }
       // 新建行程明确未勾选“有备选路线”时，只允许存在方案 A。
       if(t.hasAlternateRoutes===false && Array.isArray(t.plans)){
         const a=t.plans.find(p=>p?.id==='A')||t.plans[0];
