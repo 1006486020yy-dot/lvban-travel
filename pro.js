@@ -1,4 +1,5 @@
-/* 旅伴旅行管家 · 稳定修复入口 */
+/* 旅伴旅行管家 · 数据兼容入口
+   行程 UI 统一由 final-trip-fix.js 接管，避免旧补丁重复渲染。 */
 (function(){
   function migrate(){
     try{
@@ -18,13 +19,5 @@
       if(changed)localStorage.setItem('lvban-trips',JSON.stringify(a));
     }catch(e){}
   }
-  function load(){
-    if(window.__lvFinalFixLoaded)return;
-    window.__lvFinalFixLoaded=true;
-    migrate();
-    var s=document.createElement('script');
-    s.src='pro-fix.js?v=20260811b';
-    document.head.appendChild(s);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load); else load();
+  migrate();
 })();
