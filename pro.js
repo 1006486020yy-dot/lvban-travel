@@ -1,31 +1,24 @@
-/* 旅伴旅行管家 · 当前界面修复层 */
+/* 旅伴旅行管家 · 行程删除与稳定性修复层 */
 (function(){
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
   const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   function dateOf(v){if(!v)return null;const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?null:d}
 
-  // 首页倒计时唯一数据源：当前旅伴行程库 window.db.trips。
-  // 不再读取旧版 lvban-trips，也不再写死“十一福建游”。
   function tripSources(){
     return (Array.isArray(window.db?.trips)?window.db.trips:[])
       .map(t=>({trip:t,start:t.start,end:t.end}))
       .filter(x=>dateOf(x.start))
       .sort((a,b)=>dateOf(a.start)-dateOf(b.start));
   }
-
   function pickTrip(){
-    const list=tripSources(); if(!list.length)return null;
+    const list=tripSources().filter(x=>localStorage.getItem('lvban-hidden-default-trip')!=='1' || x.trip?.name!=='十一福建游');
+    if(!list.length)return null;
     const now=new Date();now.setHours(0,0,0,0);
-    // 优先关联正在进行中的行程。
     const current=list.find(x=>{const s=dateOf(x.start),e=dateOf(x.end);return e&&s<=now&&now<=e;});
     if(current)return current;
-    // 没有进行中的行程时，关联开始日期距离今天最近的未来行程。
     const future=list.find(x=>dateOf(x.start)>=now);
-    if(future)return future;
-    // 所有行程都已结束时，关联最近结束/开始的那一个，避免回到旧的写死行程。
-    return list[list.length-1];
+    return future||list[list.length-1];
   }
-
   function countdown(){
     const hero=$('#home .hero');if(!hero)return;
     let box=$('#lv-countdown',hero);
@@ -38,16 +31,92 @@
     box.innerHTML='<div style="font-size:34px;font-weight:900;letter-spacing:-1px">'+days+' 天</div><div style="font-size:12px;margin-top:3px;opacity:.9">距离下一次出发 · '+esc(target.trip.name||'我的旅行')+' · '+target.trip.start+'</div>';
   }
 
-  function cleanTrips(){
-    const page=$('#trips');if(!page)return;
-    $$('.tabs',page).forEach(t=>$$('button',t).forEach(b=>{if(b.textContent.trim().includes('发现灵感'))b.remove()}));
-    $$('#tripDetail button').forEach(b=>{if((b.textContent||'').replace(/\s/g,'').includes('添加日程'))b.remove()});
-    const floats=$$('.float');floats.forEach(b=>{if(b.id!=='globalNewTrip')b.remove()});
-    const main=$('#globalNewTrip');if(main){main.textContent='＋';main.title='新建行程';main.setAttribute('aria-label','新建行程');main.style.display=$('#trips.page.active')?'block':'none'}
+  function injectStyle(){
+    if($('#lv-delete-style'))return;
+    const s=document.createElement('style');s.id='lv-delete-style';s.textContent=`
+      .lv-more-wrap{position:absolute;right:12px;top:12px;z-index:5}
+      .lv-more{width:38px;height:34px;padding:0!important;border-radius:12px!important;font-size:20px;line-height:30px;background:#f3f1ff!important;color:#6254e8!important}
+      .lv-menu{position:absolute;right:0;top:40px;min-width:130px;padding:6px;background:#fff;border:1px solid #eeeafa;border-radius:14px;box-shadow:0 12px 30px #302b5a25;display:none;z-index:20}
+      .lv-menu.show{display:block}.lv-menu button{display:block;width:100%;text-align:left;padding:10px 11px;border-radius:10px;background:transparent;color:#333;font-size:13px}.lv-menu button:hover{background:#f5f3ff}.lv-menu .lv-danger{color:#d94e5c}
+      .lv-day-delete{margin-left:auto!important;white-space:nowrap}
+      .lv-event-delete{margin-left:0!important}
+    `;document.head.appendChild(s);
   }
 
-  function run(){cleanTrips();countdown()}
-  document.addEventListener('DOMContentLoaded',()=>{run();setInterval(run,700)});
-  window.addEventListener('storage',countdown);
-  const timer=setInterval(()=>{if(typeof window.go==='function'&&!window.__lvGoHook){const old=window.go;window.go=function(id){const r=old.apply(this,arguments);setTimeout(run,30);return r};window.__lvGoHook=true;clearInterval(timer)}},100);
+  function deleteCustomTrip(i){
+    if(typeof window.deleteTrip==='function'){window.deleteTrip(i);return}
+    if(!Array.isArray(window.customTrips))return;
+    const t=window.customTrips[i];if(!t)return;
+    if(!confirm('确定删除整个行程“'+(t.name||'未命名行程')+'”？删除后无法恢复。'))return;
+    window.customTrips.splice(i,1);localStorage.setItem('lvban-trips',JSON.stringify(window.customTrips));
+    if(typeof window.renderTrips==='function')window.renderTrips();
+    countdown();
+    if(typeof window.toast==='function')window.toast('行程已删除');
+  }
+  function deleteDefaultTrip(){
+    if(!confirm('确定删除“十一福建游”整个行程？删除后首页倒计时也不会再关联它。'))return;
+    localStorage.setItem('lvban-hidden-default-trip','1');
+    const list=$$('#tripList .tripcard');if(list[0])list[0].remove();
+    const detail=$('#tripDetail');if(detail)detail.innerHTML='<div class="panel empty">这个行程已删除。<br>点击右下角 ＋ 创建新的行程。</div>';
+    countdown();
+    if(typeof window.toast==='function')window.toast('行程已删除');
+  }
+  function deleteEvent(i){
+    if(typeof window.deleteEvent==='function'){window.deleteEvent(i);return}
+  }
+  window.lvDeleteEvent=deleteEvent;
+
+  function addMoreMenu(card,index,isDefault){
+    if(card.querySelector('.lv-more-wrap'))return;
+    const wrap=document.createElement('div');wrap.className='lv-more-wrap';
+    const more=document.createElement('button');more.className='btn lv-more';more.type='button';more.textContent='⋯';more.title='更多操作';
+    const menu=document.createElement('div');menu.className='lv-menu';
+    const copy=document.createElement('button');copy.textContent='复制行程';copy.onclick=e=>{e.stopPropagation();const t=isDefault?{name:'十一福建游',start:'2026-09-28',end:'2026-10-04'}:window.customTrips?.[index];if(t){navigator.clipboard?.writeText([t.name,t.start,t.end].join(' · '));if(window.toast)toast('已复制行程信息')}};
+    const fav=document.createElement('button');fav.textContent='收藏';fav.onclick=e=>{e.stopPropagation();localStorage.setItem('lvban-fav-'+(isDefault?'default':index),'1');if(window.toast)toast('已收藏')};
+    const del=document.createElement('button');del.className='lv-danger';del.textContent='删除行程';del.onclick=e=>{e.stopPropagation();menu.classList.remove('show');isDefault?deleteDefaultTrip():deleteCustomTrip(index)};
+    menu.append(copy,fav,del);wrap.append(more,menu);card.appendChild(wrap);
+    more.onclick=e=>{e.stopPropagation();$$('.lv-menu').forEach(m=>m!==menu&&m.classList.remove('show'));menu.classList.toggle('show')};
+  }
+
+  function decorateTrips(){
+    const page=$('#trips');if(!page)return;
+    $$('.tabs',page).forEach(t=>$$('button',t).forEach(b=>{if((b.textContent||'').trim()==='发现灵感')b.remove()}));
+    injectStyle();
+    const cards=$$('#tripList .tripcard');
+    cards.forEach((card,i)=>{
+      const isDefault=i===0 && (card.textContent||'').includes('十一福建游');
+      if(isDefault && localStorage.getItem('lvban-hidden-default-trip')==='1'){card.remove();return}
+      addMoreMenu(card,isDefault,isDefault?0:i-1);
+    });
+    const detail=$('#tripDetail');if(!detail)return;
+    const detailCard=$$('.panel',detail)[0];
+    if(detailCard && !detailCard.querySelector('.lv-day-delete')){
+      const bar=$('.detailbar',detailCard);
+      if(bar){const b=document.createElement('button');b.className='btn danger lv-day-delete';b.textContent='删除当天';b.onclick=e=>{e.stopPropagation();const js=`const a=schedules[state.plan],i=Number(state.day||0);if(a.length<=1){alert('至少保留一天行程。若不需要这个旅行，请删除整个行程。')}else if(confirm('确定删除“'+(a[i].title||a[i].date||'当天')+'”整天行程？当天的所有时间安排都会一起删除。')){a.splice(i,1);state.day=Math.max(0,Math.min(i,a.length-1));renderTrips()}`;window.eval(js)};bar.appendChild(b)}
+    }
+    const days=$$('.days .day',detail);
+    days.forEach((dayBtn,i)=>{
+      if(dayBtn.querySelector('.lv-day-x'))return;
+      dayBtn.style.position='relative';
+      const x=document.createElement('span');x.className='lv-day-x';x.textContent='×';x.title='删除当天';x.style='display:inline-block;margin-left:7px;color:#d94e5c;font-weight:900;cursor:pointer';
+      x.onclick=e=>{e.stopPropagation();const js=`state.day=${i};const a=schedules[state.plan];if(a.length<=1){alert('至少保留一天行程。若不需要这个旅行，请删除整个行程。')}else if(confirm('确定删除“'+(a[state.day].title||a[state.day].date||'当天')+'”整天行程？当天的所有时间安排都会一起删除。')){a.splice(state.day,1);state.day=Math.max(0,Math.min(state.day,a.length-1));renderTrips()}`;window.eval(js)};dayBtn.appendChild(x);
+    });
+    $$('.timeline .event',detail).forEach((event,i)=>{
+      const has=[...event.querySelectorAll('button')].some(b=>(b.textContent||'').trim()==='删除');
+      if(!has){const actions=document.createElement('div');actions.className='actions';const b=document.createElement('button');b.className='btn danger lv-event-delete';b.textContent='删除';b.onclick=e=>{e.stopPropagation();deleteEvent(i)};actions.appendChild(b);event.appendChild(actions)}
+    });
+  }
+
+  function wrapRender(){
+    if(window.__lvRenderWrapped || typeof window.renderTrips!=='function')return false;
+    const old=window.renderTrips;
+    window.renderTrips=function(){const r=old.apply(this,arguments);setTimeout(decorateTrips,0);return r};
+    window.__lvRenderWrapped=true;return true;
+  }
+
+  function run(){injectStyle();decorateTrips();countdown();wrapRender()}
+  document.addEventListener('DOMContentLoaded',()=>{run();setInterval(run,500)});
+  const mo=new MutationObserver(()=>{decorateTrips();countdown()});
+  document.addEventListener('DOMContentLoaded',()=>mo.observe(document.body,{childList:true,subtree:true}));
+  window.addEventListener('storage',()=>{decorateTrips();countdown()});
 })();
