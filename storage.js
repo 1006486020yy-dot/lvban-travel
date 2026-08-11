@@ -17,7 +17,7 @@
  function guessType(n){return /酒店/.test(n)?'酒店':/D\d+|C\d+|高铁|动车|前往|机场|车站/.test(n)?'交通':/店|餐|美食|粥|面|牛排|肉粽|沙茶|五香|花生汤|麻糍/.test(n)?'美食':'景点';}
  function makeMainTrip(){
    const schedules=window.schedules||{};
-   return {id:'trip-main',name:'十一福建游',city:'福州 · 平潭 · 泉州 · 厦门',start:'2026-09-28',end:'2026-10-04',people:1,plans:[{id:'A',name:'方案 A',days:dayMap(schedules.A||[])},{id:'B',name:'方案 B',days:dayMap(schedules.B||[])}]};
+   return {id:'trip-main',name:'十一福建游',city:'福州 · 平潭 · 泉州 · 厦门',start:'2026-09-28',end:'2026-10-04',people:1,hasAlternateRoutes:true,plans:[{id:'A',name:'方案 A',days:dayMap(schedules.A||[])},{id:'B',name:'方案 B',days:dayMap(schedules.B||[])}]};
  }
  const existing=load();
  window.db={trips:Array.isArray(existing.trips)&&existing.trips.length?existing.trips:[makeMainTrip()],spots:(window.LVBAN_DATA?.spots||[]).map(x=>({...x})),foods:(window.LVBAN_DATA?.foods||[]).map(x=>({...x})),hotels:[],favorites:existing.favorites||{spots:[],foods:[],hotels:[],other:[]}};
@@ -55,4 +55,5 @@
  const home=document.getElementById('home');if(home){if(!document.getElementById('homeSpots')){const x=document.createElement('div');x.id='homeSpots';x.style.display='none';home.appendChild(x)}if(!document.getElementById('homeFoods')){const x=document.createElement('div');x.id='homeFoods';x.style.display='none';home.appendChild(x)}}
  const fix=document.createElement('script');fix.src='ui-fixes.js?v=20260810';document.head.appendChild(fix);
  const fix2=document.createElement('script');fix2.src='ui-fixes2.js?v=20260811';document.head.appendChild(fix2);
+ const fix3=document.createElement('script');fix3.src='ui-fixes3.js?v=20260811';document.head.appendChild(fix3);
 })();
