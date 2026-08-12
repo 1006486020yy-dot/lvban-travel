@@ -55,14 +55,14 @@
     window.addEvent=function(){
       window.modal('添加日程',
         '<div class="form smart-event-form">'+
-          '<label>时间</label><input id="xTime" type="time" value="09:00">'+
-          '<label>安排什么？</label>'+\
-          '<input id="xName" autocomplete="off" placeholder="例如：南普陀寺 / 鼓浪屿 / 午餐">'+
-          '<div id="eventSuggestions" style="display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 5px"></div>'+\
-          '<label>地址</label>'+\
-          '<input id="xAddr" placeholder="选择景点后会自动填入地址，也可以手动修改">'+\
-          '<label>备注</label><textarea id="xNote" placeholder="交通、门票、预约等"></textarea>'+\
-          '<button class="btn primary" onclick="saveSmartEvent()">加入当天日程</button>'+\
+        '<label>时间</label><input id="xTime" type="time" value="09:00">'+
+        '<label>安排什么？</label>'+
+        '<input id="xName" autocomplete="off" placeholder="例如：南普陀寺 / 鼓浪屿 / 午餐">'+
+        '<div id="eventSuggestions" style="display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 5px"></div>'+
+        '<label>地址</label>'+
+        '<input id="xAddr" placeholder="选择景点后会自动填入地址，也可以手动修改">'+
+        '<label>备注</label><textarea id="xNote" placeholder="交通、门票、预约等"></textarea>'+
+        '<button class="btn primary" onclick="saveSmartEvent()">加入当天日程</button>'+
         '</div>'
       );
 
@@ -72,7 +72,9 @@
       if(!name||!addr||!box)return;
       function render(q){
         var a=matches(q);
-        box.innerHTML=a.map(function(x,i){return '<button type="button" class="btn" data-i="'+i+'" style="text-align:left">'+esc(x.name)+'<span style="font-size:10px;margin-left:5px;opacity:.65">'+esc(x.type)+'</span></button>';}).join('');
+        box.innerHTML=a.map(function(x,i){
+          return '<button type="button" class="btn" data-i="'+i+'" style="text-align:left">'+esc(x.name)+'<span style="font-size:10px;margin-left:5px;opacity:.65">'+esc(x.type)+'</span></button>';
+        }).join('');
         Array.prototype.forEach.call(box.querySelectorAll('button'),function(b){
           b.onclick=function(){
             var x=a[Number(b.getAttribute('data-i'))];
@@ -109,7 +111,8 @@
     };
 
     if(!document.getElementById('smartEventStyle')){
-      var st=document.createElement('style');st.id='smartEventStyle';
+      var st=document.createElement('style');
+      st.id='smartEventStyle';
       st.textContent='.smart-event-form #eventSuggestions .btn{padding:8px 10px;font-size:12px}.smart-event-form #eventSuggestions .btn:hover{background:#e8e5ff}';
       document.head.appendChild(st);
     }
