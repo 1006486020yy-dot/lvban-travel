@@ -1,170 +1,153 @@
-/* 旅伴旅行管家 · 2026-08-12 目的地选择器稳定修复 v4
- * 修复：点击“目的地”必须立即打开选择器。
- * 关键改动：城市选择器不再挂到 body，而是挂到当前 #modal 内部，避免与旧版 modal / boot-fix 的 z-index、事件层级发生冲突。
- * 不改原版首页、目录、详情布局。
+/* 旅伴旅行管家 · 2026-08-12 目的地选择器稳定修复 v5
+ * 核心修复：新建行程 -> 目的地 -> 选择城市不再创建第二层 overlay。
+ * 城市选择直接切换当前 modal 的内容状态，确认/取消后恢复新建行程表单。
+ * 这样不会再出现“点目的地没反应，点关闭后城市选择器才出现”的前后层级错误。
+ * 不改首页、景点、美食、交通、酒店、AI 以及原有行程详情布局。
  */
 (function(){
   'use strict';
   const $=s=>document.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const toast=m=>window.toast?.(m);
   let picked=[];
   let mode='manual';
-
-  function closeCityPicker(){ $('#lvCityPickerOverlay')?.remove(); }
-  function closeAll(){ closeCityPicker(); $('#modal')?.classList.remove('show'); }
-  window.lvForceCloseModal=closeAll;
+  let formDraft={name:'',start:'',end:'',alternate:false};
+  let pickerOpen=false;
 
   function cityList(){
     const src=window.LVBAN_CITIES;
     let list=[];
-    if(src && typeof src==='object' && !Array.isArray(src)){
-      Object.values(src).forEach(v=>{ if(Array.isArray(v)) list.push(...v); });
+    if(src&&typeof src==='object'&&!Array.isArray(src)){
+      Object.values(src).forEach(v=>{if(Array.isArray(v))list.push(...v)});
     }
-    if(!list.length && Array.isArray(window.LVBAN_CITY_LIST)){
+    if(!list.length&&Array.isArray(window.LVBAN_CITY_LIST)){
       list=window.LVBAN_CITY_LIST.map(x=>typeof x==='string'?x:x?.city).filter(Boolean);
     }
-    if(!list.length) list=['北京市','上海市','广州市','深圳市','杭州市','成都市','重庆市','西安市','福州市','厦门市','泉州市','平潭综合实验区','南京市','苏州市','武汉市','长沙市','青岛市','大连市','三亚市','桂林市'];
+    if(!list.length)list=['北京市','上海市','广州市','深圳市','杭州市','成都市','重庆市','西安市','福州市','厦门市','泉州市','平潭综合实验区','南京市','苏州市','武汉市','长沙市','青岛市','大连市','三亚市','桂林市'];
     return [...new Set(list.filter(Boolean))];
   }
 
-  function showPicker(){
-    if($('#lvCityPickerOverlay')) return;
-    const modal=$('#modal');
-    if(!modal) return;
-
-    const ov=document.createElement('div');
-    ov.id='lvCityPickerOverlay';
-    ov.innerHTML=`<div class="lv-city-sheet" role="dialog" aria-label="选择目的地">
-      <div class="lv-city-head"><b>选择目的地</b><button type="button" id="lvCityCancel">取消</button></div>
-      <div class="lv-city-picked" id="lvCityPicked"></div>
-      <input id="lvCitySearch" class="lv-city-search" placeholder="搜索城市，例如：厦门、福州、成都" autocomplete="off">
-      <div class="lv-city-hint">支持搜索和多选城市，点击城市即可选择/取消</div>
-      <div class="lv-city-list" id="lvCityList"></div>
-      <button type="button" class="lv-city-confirm" id="lvCityConfirm">确认城市</button>
-    </div>`;
-
-    // 直接放进当前 modal，彻底避免 body 层级、z-index 和旧事件脚本互相干扰。
-    modal.appendChild(ov);
-
-    const list=cityList();
-    const render=()=>{
-      const search=$('#lvCitySearch');
-      const q=(search?.value||'').trim();
-      const arr=list.filter(c=>!q||c.includes(q)).slice(0,160);
-      const listEl=$('#lvCityList');
-      const pickedEl=$('#lvCityPicked');
-      if(listEl){
-        listEl.innerHTML=arr.map(c=>`<button type="button" class="lv-city-option ${picked.includes(c)?'on':''}" data-city="${esc(c)}"><span>${esc(c)}</span><small>${picked.includes(c)?'✓ 已选择':'选择'}</small></button>`).join('')||'<div class="lv-city-empty">没有找到匹配城市</div>';
-      }
-      if(pickedEl){
-        pickedEl.innerHTML=picked.length?picked.map(c=>`<span>${esc(c)} <button type="button" data-remove="${esc(c)}">×</button></span>`).join(''):'<span class="lv-city-none">暂未选择城市</span>';
-      }
-    };
-
-    $('#lvCitySearch')?.addEventListener('input',render);
-    $('#lvCityList')?.addEventListener('click',e=>{
-      const b=e.target.closest('[data-city]');
-      if(!b)return;
-      e.preventDefault();
-      e.stopPropagation();
-      const c=b.dataset.city;
-      picked=picked.includes(c)?picked.filter(x=>x!==c):picked.concat(c);
-      render();
-    });
-    $('#lvCityPicked')?.addEventListener('click',e=>{
-      const b=e.target.closest('[data-remove]');
-      if(!b)return;
-      e.preventDefault();
-      e.stopPropagation();
-      picked=picked.filter(x=>x!==b.dataset.remove);
-      render();
-    });
-    $('#lvCityCancel').onclick=e=>{e.preventDefault();e.stopPropagation();closeCityPicker();};
-    $('#lvCityConfirm').onclick=e=>{
-      e.preventDefault();e.stopPropagation();
-      if(!picked.length){window.toast?.('请至少选择一个目的地');return;}
-      updateDestination();
-      closeCityPicker();
-    };
-    render();
-    requestAnimationFrame(()=>$('#lvCitySearch')?.focus());
-  }
-  window.lvOpenCityPicker=showPicker;
-
-  function updateDestination(){
-    const field=$('#ntDestination');
-    if(!field)return;
-    field.innerHTML=`<span class="lv-destination-value">${picked.map(esc).join(' · ')}</span><span class="lv-destination-action">重新选择 ›</span>`;
-    field.classList.add('has');
-  }
-
-  function chooseMode(m){
-    mode=m;
-    $('#manualMode')?.classList.toggle('on',m==='manual');
-    $('#aiMode')?.classList.toggle('on',m==='ai');
-  }
-  window.chooseMode=chooseMode;
-
-  function showModal(title,body){
+  function modalShow(title,body){
     const modal=$('#modal');
     if(!modal)return;
-    closeCityPicker();
     $('#modalTitle').textContent=title;
     $('#modalBody').innerHTML=body;
     modal.classList.add('show');
   }
 
-  function newTrip(){
-    closeCityPicker();
-    picked=[];
-    mode='manual';
-    showModal('新建行程',`<div class="form lv-newtrip-form">
+  function snapshotForm(){
+    formDraft={
+      name:$('#ntName')?.value||formDraft.name||'',
+      start:$('#ntStart')?.value||formDraft.start||'',
+      end:$('#ntEnd')?.value||formDraft.end||'',
+      alternate:!!$('#ntAlternate')?.checked
+    };
+  }
+
+  function destinationText(){return picked.length?picked.join(' · '):'点击选择城市，可多选'}
+
+  function renderNewTripForm(){
+    modalShow('新建行程',`<div class="form lv-newtrip-form">
       <label>行程名称</label>
-      <input id="ntName" placeholder="例如：国庆厦门慢旅行">
+      <input id="ntName" placeholder="例如：国庆厦门慢旅行" value="${esc(formDraft.name)}">
       <label>目的地</label>
-      <button type="button" id="ntDestination" data-lv-open-city="1" class="lv-destination-field"><span>点击选择城市，可多选</span><span class="lv-destination-action">选择城市 ›</span></button>
+      <button type="button" id="ntDestination" class="lv-destination-field ${picked.length?'has':''}"><span>${esc(destinationText())}</span><span class="lv-destination-action">${picked.length?'重新选择 ›':'选择城市 ›'}</span></button>
       <div class="hint">点击整块区域打开选择框，支持搜索和多选城市。</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div><label>开始日期</label><input id="ntStart" type="date"></div>
-        <div><label>结束日期</label><input id="ntEnd" type="date"></div>
+        <div><label>开始日期</label><input id="ntStart" type="date" value="${esc(formDraft.start)}"></div>
+        <div><label>结束日期</label><input id="ntEnd" type="date" value="${esc(formDraft.end)}"></div>
       </div>
-      <label class="check"><input id="ntAlternate" type="checkbox"> 是否有备选路线<br><small>只有勾选后，才会生成方案 A / 方案 B</small></label>
+      <label class="check"><input id="ntAlternate" type="checkbox" ${formDraft.alternate?'checked':''}> 是否有备选路线<br><small>只有勾选后，才会生成方案 A / 方案 B</small></label>
       <label>你想怎么创建？</label>
-      <div class="createModes"><button type="button" class="mode on" id="manualMode">我自己安排<small>自己添加日期和详细行程</small></button><button type="button" class="mode" id="aiMode">让 AI 帮我规划<small>创建后进入 AI 规划</small></button></div>
+      <div class="createModes"><button type="button" class="mode ${mode==='manual'?'on':''}" id="manualMode">我自己安排<small>自己添加日期和详细行程</small></button><button type="button" class="mode ${mode==='ai'?'on':''}" id="aiMode">让 AI 帮我规划<small>创建后进入 AI 规划</small></button></div>
       <button type="button" class="btn primary wide" id="lvCreateTripBtn">创建行程</button>
     </div>`);
-
-    const dest=$('#ntDestination');
-    if(dest) dest.onclick=e=>{e.preventDefault();e.stopPropagation();showPicker();};
-    $('#manualMode').onclick=()=>chooseMode('manual');
-    $('#aiMode').onclick=()=>chooseMode('ai');
+    $('#ntDestination').onclick=e=>{e.preventDefault();e.stopPropagation();snapshotForm();showCityPicker();};
+    $('#manualMode').onclick=()=>{snapshotForm();mode='manual';renderNewTripForm()};
+    $('#aiMode').onclick=()=>{snapshotForm();mode='ai';renderNewTripForm()};
     $('#lvCreateTripBtn').onclick=createTrip;
+  }
+
+  function showCityPicker(){
+    if(pickerOpen)return;
+    snapshotForm();
+    pickerOpen=true;
+    const list=cityList();
+    modalShow('选择目的地',`<div class="lv-city-picker">
+      <div class="lv-city-selected" id="lvCitySelected"></div>
+      <input id="lvCitySearch" class="lv-city-search" placeholder="搜索城市，例如：厦门、福州、成都" autocomplete="off">
+      <div class="lv-city-hint">支持搜索和多选城市，点击城市即可选择 / 取消。</div>
+      <div class="lv-city-list" id="lvCityList"></div>
+      <div class="actions"><button type="button" class="btn" id="lvCityCancel">取消</button><button type="button" class="btn primary" id="lvCityConfirm">确认城市</button></div>
+    </div>`);
+
+    const render=()=>{
+      const q=($('#lvCitySearch')?.value||'').trim();
+      const arr=list.filter(c=>!q||c.includes(q)).slice(0,160);
+      const listEl=$('#lvCityList');
+      const selectedEl=$('#lvCitySelected');
+      if(listEl)listEl.innerHTML=arr.map(c=>`<button type="button" class="lv-city-option ${picked.includes(c)?'on':''}" data-city="${esc(c)}"><span>${esc(c)}</span><small>${picked.includes(c)?'✓ 已选择':'选择'}</small></button>`).join('')||'<div class="lv-city-empty">没有找到匹配城市</div>';
+      if(selectedEl)selectedEl.innerHTML=picked.length?picked.map(c=>`<span>${esc(c)} <button type="button" data-remove="${esc(c)}">×</button></span>`).join(''):'<span class="lv-city-none">暂未选择城市</span>';
+    };
+
+    $('#lvCitySearch').oninput=render;
+    $('#lvCityList').onclick=e=>{
+      const b=e.target.closest('[data-city]');
+      if(!b)return;
+      e.preventDefault();e.stopPropagation();
+      const c=b.dataset.city;
+      picked=picked.includes(c)?picked.filter(x=>x!==c):picked.concat(c);
+      render();
+    };
+    $('#lvCitySelected').onclick=e=>{
+      const b=e.target.closest('[data-remove]');
+      if(!b)return;
+      e.preventDefault();e.stopPropagation();
+      picked=picked.filter(x=>x!==b.dataset.remove);
+      render();
+    };
+    $('#lvCityCancel').onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      pickerOpen=false;
+      renderNewTripForm();
+    };
+    $('#lvCityConfirm').onclick=e=>{
+      e.preventDefault();e.stopPropagation();
+      if(!picked.length){toast('请至少选择一个目的地');return;}
+      pickerOpen=false;
+      renderNewTripForm();
+    };
+    requestAnimationFrame(()=>$('#lvCitySearch')?.focus());
+    render();
+  }
+
+  function chooseMode(m){mode=m;renderNewTripForm()}
+  window.chooseMode=chooseMode;
+  window.lvOpenCityPicker=showCityPicker;
+
+  function newTrip(){
+    pickerOpen=false;
+    picked=[];
+    mode='manual';
+    formDraft={name:'',start:'',end:'',alternate:false};
+    renderNewTripForm();
   }
   window.newTrip=newTrip;
 
-  // 只处理目的地按钮和关闭按钮；不再使用 pointerdown 提前打开，避免一次点击触发两套事件。
-  document.addEventListener('click',e=>{
-    const closeBtn=e.target?.closest?.('#modal .title .btn');
-    if(closeBtn){e.preventDefault();e.stopImmediatePropagation();closeAll();return;}
-    const target=e.target?.closest?.('[data-lv-open-city]');
-    if(target){e.preventDefault();e.stopImmediatePropagation();if(!$('#lvCityPickerOverlay'))showPicker();return;}
-  },true);
-
   function uid(){return 'lv-'+Date.now()+Math.random().toString(36).slice(2,7)}
+
   function createTrip(){
-    const name=$('#ntName')?.value.trim();
-    const start=$('#ntStart')?.value;
-    const end=$('#ntEnd')?.value;
-    const alternate=!!$('#ntAlternate')?.checked;
-    if(!name||!start||!end){window.toast?.('请填写行程名称和日期');return;}
-    if(end<start){window.toast?.('结束日期不能早于开始日期');return;}
-    if(!picked.length){window.toast?.('请选择至少一个目的地');showPicker();return;}
+    snapshotForm();
+    const name=formDraft.name.trim(),start=formDraft.start,end=formDraft.end,alternate=formDraft.alternate;
+    if(!name||!start||!end){toast('请填写行程名称和日期');return}
+    if(end<start){toast('结束日期不能早于开始日期');return}
+    if(!picked.length){toast('请选择至少一个目的地');showCityPicker();return}
     const days=[];
     let d=new Date(start+'T00:00:00');
     const last=new Date(end+'T00:00:00');
     while(d<=last){
-      const city=picked[Math.min(days.length,picked.length-1)];
-      days.push({id:uid(),label:'DAY '+(days.length+1),date:d.toISOString().slice(0,10),title:picked.length>1?city+' · 待安排':'待安排',city,items:[]});
+      const c=picked[Math.min(days.length,picked.length-1)];
+      days.push({id:uid(),label:'DAY '+(days.length+1),date:d.toISOString().slice(0,10),title:picked.length>1?c+' · 待安排':'待安排',city:c,items:[]});
       d.setDate(d.getDate()+1);
     }
     const clone=()=>JSON.parse(JSON.stringify(days)).map(x=>({...x,id:uid(),items:[]}));
@@ -176,24 +159,36 @@
     window.activeTrip=t.id;window.activePlan='A';window.activeDay=0;
     if(typeof window.save==='function')window.save();
     else if(window.LvbanStore?.patch)window.LvbanStore.patch(s=>s.trips=window.db.trips);
-    closeAll();
+    pickerOpen=false;picked=[];formDraft={name:'',start:'',end:'',alternate:false};
+    window.closeModal?.();
     window.renderTrips?.();
-    window.toast?.(alternate?'创建成功：已生成 A / B':'创建成功');
+    toast(alternate?'创建成功：已生成 A / B':'创建成功');
     if(mode==='ai')setTimeout(()=>window.go?.('ai'),120);
-    picked=[];
   }
   window.createTrip=createTrip;
 
   const style=document.getElementById('lv-final-interaction-style')||document.createElement('style');
   style.id='lv-final-interaction-style';
   style.textContent=`
-    #lvCityPickerOverlay{position:absolute;inset:0;z-index:99999;background:rgba(23,23,42,.72);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto}
-    #lvCityPickerOverlay .lv-city-sheet{width:min(720px,100%);max-height:88vh;overflow:hidden;background:#f7f8fc;border-radius:28px 28px 0 0;padding:20px;box-shadow:0 -12px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:10px;pointer-events:auto}
-    .lv-city-head{display:flex;justify-content:space-between;align-items:center;font-size:20px}.lv-city-head button{background:#efedff;color:#5d4de5;border-radius:12px;padding:9px 13px;font-weight:800}
-    .lv-city-picked{display:flex;gap:7px;flex-wrap:wrap;min-height:32px}.lv-city-picked>span{background:#efedff;color:#5d4de5;padding:7px 10px;border-radius:11px;font-size:12px}.lv-city-picked button{background:none;color:#5d4de5;padding:0 0 0 5px}.lv-city-none{background:transparent!important;color:#999!important;padding-left:0!important}
-    .lv-city-search{width:100%;padding:13px 14px;border:1px solid #e5e2f5;border-radius:14px;background:#fff;outline:0}.lv-city-hint{font-size:11px;color:#888}.lv-city-list{overflow:auto;display:grid;gap:7px;min-height:120px}.lv-city-option{padding:12px 13px;border-radius:13px;background:#fff;text-align:left;display:flex;justify-content:space-between;border:1px solid transparent}.lv-city-option.on{background:#efedff;border-color:#d9d3ff;color:#5d4de5}.lv-city-option small{color:#999}.lv-city-empty{padding:20px;text-align:center;color:#999}.lv-city-confirm{width:100%;padding:14px;border-radius:15px;background:#6958f5;color:#fff;font-weight:900}
-    .lv-destination-field{width:100%;padding:13px 14px;border:1px solid #e9e7f2;border-radius:14px;background:#fff;text-align:left;color:#777;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10001;pointer-events:auto;cursor:pointer}.lv-destination-field span{color:#5d4de5;font-weight:800}.lv-destination-field.has{color:#333}.lv-newtrip-form .mode{text-align:left}.lv-newtrip-form .mode small{display:block;color:#999;font-size:10px;margin-top:3px}.lv-newtrip-form .mode.on small{color:#777}
     #modal{z-index:10000}
+    .lv-newtrip-form .hint{font-size:11px;color:#8a8798;margin-top:-3px}
+    .lv-destination-field{width:100%;padding:13px 14px;border:1px solid #e9e7f2;border-radius:14px;background:#fff;text-align:left;color:#777;display:flex;justify-content:space-between;align-items:center;cursor:pointer;position:relative;z-index:1;pointer-events:auto}
+    .lv-destination-field span:last-child{color:#5d4de5;font-weight:800;white-space:nowrap;margin-left:10px}
+    .lv-destination-field.has{color:#222}
+    .lv-newtrip-form .mode{text-align:left}
+    .lv-newtrip-form .mode small{display:block;color:#999;font-size:10px;margin-top:3px}
+    .lv-city-picker{display:flex;flex-direction:column;gap:10px}
+    .lv-city-selected{display:flex;gap:7px;flex-wrap:wrap;min-height:30px}
+    .lv-city-selected>span{background:#efedff;color:#5d4de5;padding:7px 10px;border-radius:11px;font-size:12px}
+    .lv-city-selected button{border:0;background:none;color:#5d4de5;padding:0 0 0 5px;cursor:pointer}
+    .lv-city-none{background:transparent!important;color:#999!important;padding-left:0!important}
+    .lv-city-search{width:100%;padding:13px 14px;border:1px solid #e5e2f5;border-radius:14px;background:#fff;outline:0}
+    .lv-city-hint{font-size:11px;color:#888}
+    .lv-city-list{max-height:48vh;overflow:auto;display:grid;gap:7px}
+    .lv-city-option{padding:12px 13px;border-radius:13px;background:#fff;text-align:left;display:flex;justify-content:space-between;border:1px solid transparent;cursor:pointer}
+    .lv-city-option.on{background:#efedff;border-color:#d9d3ff;color:#5d4de5}
+    .lv-city-option small{color:#999}
+    .lv-city-empty{padding:20px;text-align:center;color:#999}
   `;
   if(!style.parentNode)document.head.appendChild(style);
 })();
