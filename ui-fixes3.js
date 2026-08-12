@@ -14,6 +14,11 @@
         f.onload=function(){
           var n=document.createElement('script');
           n.src='trip-city-date-nav-fix.js?v=20260812-nav1';
+          n.onload=function(){
+            var z=document.createElement('script');
+            z.src='schedule-smart-fill-fix.js?v=20260812-smart1';
+            document.head.appendChild(z);
+          };
           document.head.appendChild(n);
         };
         document.head.appendChild(f);
