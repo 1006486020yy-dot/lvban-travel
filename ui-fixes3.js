@@ -4,10 +4,15 @@
     if(window.__lvFinalTripLoader)return;
     window.__lvFinalTripLoader=true;
     var s=document.createElement('script');
-    s.src='final-trip-fix.js?v=20260811-final5';
+    s.src='final-trip-fix.js?v=20260811-final6';
     s.onload=function(){
       var c=document.createElement('script');
       c.src='create-trip-fix.js?v=20260811-v3';
+      c.onload=function(){
+        var f=document.createElement('script');
+        f.src='create-trip-submit-fix.js?v=20260812-submit1';
+        document.head.appendChild(f);
+      };
       document.head.appendChild(c);
     };
     document.head.appendChild(s);
