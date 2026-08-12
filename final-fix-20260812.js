@@ -1,5 +1,7 @@
-/* 旅伴旅行管家 · 2026-08-12 目的地选择器稳定修复
- * 只修新建行程的目的地交互与弹窗关闭，不改原版页面布局。
+/* 旅伴旅行管家 · 2026-08-12 目的地选择器稳定修复 v4
+ * 修复：点击“目的地”必须立即打开选择器。
+ * 关键改动：城市选择器不再挂到 body，而是挂到当前 #modal 内部，避免与旧版 modal / boot-fix 的 z-index、事件层级发生冲突。
+ * 不改原版首页、目录、详情布局。
  */
 (function(){
   'use strict';
@@ -8,27 +10,28 @@
   let picked=[];
   let mode='manual';
 
-  function closeAll(){
-    $('#lvCityPickerOverlay')?.remove();
-    $('#modal')?.classList.remove('show');
-  }
+  function closeCityPicker(){ $('#lvCityPickerOverlay')?.remove(); }
+  function closeAll(){ closeCityPicker(); $('#modal')?.classList.remove('show'); }
   window.lvForceCloseModal=closeAll;
 
   function cityList(){
     const src=window.LVBAN_CITIES;
     let list=[];
     if(src && typeof src==='object' && !Array.isArray(src)){
-      Object.values(src).forEach(v=>{
-        if(Array.isArray(v)) list.push(...v);
-      });
+      Object.values(src).forEach(v=>{ if(Array.isArray(v)) list.push(...v); });
     }
-    if(!list.length && Array.isArray(window.LVBAN_CITY_LIST)) list=window.LVBAN_CITY_LIST.map(x=>typeof x==='string'?x:x?.city).filter(Boolean);
+    if(!list.length && Array.isArray(window.LVBAN_CITY_LIST)){
+      list=window.LVBAN_CITY_LIST.map(x=>typeof x==='string'?x:x?.city).filter(Boolean);
+    }
     if(!list.length) list=['北京市','上海市','广州市','深圳市','杭州市','成都市','重庆市','西安市','福州市','厦门市','泉州市','平潭综合实验区','南京市','苏州市','武汉市','长沙市','青岛市','大连市','三亚市','桂林市'];
     return [...new Set(list.filter(Boolean))];
   }
 
   function showPicker(){
     if($('#lvCityPickerOverlay')) return;
+    const modal=$('#modal');
+    if(!modal) return;
+
     const ov=document.createElement('div');
     ov.id='lvCityPickerOverlay';
     ov.innerHTML=`<div class="lv-city-sheet" role="dialog" aria-label="选择目的地">
@@ -39,37 +42,49 @@
       <div class="lv-city-list" id="lvCityList"></div>
       <button type="button" class="lv-city-confirm" id="lvCityConfirm">确认城市</button>
     </div>`;
-    document.body.appendChild(ov);
+
+    // 直接放进当前 modal，彻底避免 body 层级、z-index 和旧事件脚本互相干扰。
+    modal.appendChild(ov);
 
     const list=cityList();
     const render=()=>{
-      const q=($('#lvCitySearch')?.value||'').trim();
+      const search=$('#lvCitySearch');
+      const q=(search?.value||'').trim();
       const arr=list.filter(c=>!q||c.includes(q)).slice(0,160);
       const listEl=$('#lvCityList');
       const pickedEl=$('#lvCityPicked');
-      if(listEl) listEl.innerHTML=arr.map(c=>`<button type="button" class="lv-city-option ${picked.includes(c)?'on':''}" data-city="${esc(c)}"><span>${esc(c)}</span><small>${picked.includes(c)?'✓ 已选择':'选择'}</small></button>`).join('')||'<div class="lv-city-empty">没有找到匹配城市</div>';
-      if(pickedEl) pickedEl.innerHTML=picked.length?picked.map(c=>`<span>${esc(c)} <button type="button" data-remove="${esc(c)}">×</button></span>`).join(''):'<span class="lv-city-none">暂未选择城市</span>';
+      if(listEl){
+        listEl.innerHTML=arr.map(c=>`<button type="button" class="lv-city-option ${picked.includes(c)?'on':''}" data-city="${esc(c)}"><span>${esc(c)}</span><small>${picked.includes(c)?'✓ 已选择':'选择'}</small></button>`).join('')||'<div class="lv-city-empty">没有找到匹配城市</div>';
+      }
+      if(pickedEl){
+        pickedEl.innerHTML=picked.length?picked.map(c=>`<span>${esc(c)} <button type="button" data-remove="${esc(c)}">×</button></span>`).join(''):'<span class="lv-city-none">暂未选择城市</span>';
+      }
     };
 
-    $('#lvCitySearch').addEventListener('input',render);
-    $('#lvCityList').addEventListener('click',e=>{
+    $('#lvCitySearch')?.addEventListener('input',render);
+    $('#lvCityList')?.addEventListener('click',e=>{
       const b=e.target.closest('[data-city]');
       if(!b)return;
+      e.preventDefault();
+      e.stopPropagation();
       const c=b.dataset.city;
       picked=picked.includes(c)?picked.filter(x=>x!==c):picked.concat(c);
       render();
     });
-    $('#lvCityPicked').addEventListener('click',e=>{
+    $('#lvCityPicked')?.addEventListener('click',e=>{
       const b=e.target.closest('[data-remove]');
       if(!b)return;
+      e.preventDefault();
+      e.stopPropagation();
       picked=picked.filter(x=>x!==b.dataset.remove);
       render();
     });
-    $('#lvCityCancel').onclick=()=>ov.remove();
-    $('#lvCityConfirm').onclick=()=>{
+    $('#lvCityCancel').onclick=e=>{e.preventDefault();e.stopPropagation();closeCityPicker();};
+    $('#lvCityConfirm').onclick=e=>{
+      e.preventDefault();e.stopPropagation();
       if(!picked.length){window.toast?.('请至少选择一个目的地');return;}
       updateDestination();
-      ov.remove();
+      closeCityPicker();
     };
     render();
     requestAnimationFrame(()=>$('#lvCitySearch')?.focus());
@@ -93,12 +108,14 @@
   function showModal(title,body){
     const modal=$('#modal');
     if(!modal)return;
+    closeCityPicker();
     $('#modalTitle').textContent=title;
     $('#modalBody').innerHTML=body;
     modal.classList.add('show');
   }
 
   function newTrip(){
+    closeCityPicker();
     picked=[];
     mode='manual';
     showModal('新建行程',`<div class="form lv-newtrip-form">
@@ -116,27 +133,21 @@
       <div class="createModes"><button type="button" class="mode on" id="manualMode">我自己安排<small>自己添加日期和详细行程</small></button><button type="button" class="mode" id="aiMode">让 AI 帮我规划<small>创建后进入 AI 规划</small></button></div>
       <button type="button" class="btn primary wide" id="lvCreateTripBtn">创建行程</button>
     </div>`);
-    // 直接绑定 + 全局事件委托双保险，避免任何旧脚本拦截导致目的地失效。
+
     const dest=$('#ntDestination');
-    if(dest) dest.onclick=e=>{e.preventDefault();showPicker();};
+    if(dest) dest.onclick=e=>{e.preventDefault();e.stopPropagation();showPicker();};
     $('#manualMode').onclick=()=>chooseMode('manual');
     $('#aiMode').onclick=()=>chooseMode('ai');
     $('#lvCreateTripBtn').onclick=createTrip;
   }
   window.newTrip=newTrip;
 
-  // 使用 pointerdown 捕获阶段，优先于其他脚本的 click 处理。
-  document.addEventListener('pointerdown',e=>{
-    const target=e.target?.closest?.('[data-lv-open-city]');
-    if(target){e.preventDefault();e.stopImmediatePropagation();showPicker();}
-  },true);
+  // 只处理目的地按钮和关闭按钮；不再使用 pointerdown 提前打开，避免一次点击触发两套事件。
   document.addEventListener('click',e=>{
     const closeBtn=e.target?.closest?.('#modal .title .btn');
     if(closeBtn){e.preventDefault();e.stopImmediatePropagation();closeAll();return;}
     const target=e.target?.closest?.('[data-lv-open-city]');
     if(target){e.preventDefault();e.stopImmediatePropagation();if(!$('#lvCityPickerOverlay'))showPicker();return;}
-    const overlay=e.target?.closest?.('#lvCityPickerOverlay');
-    if(overlay && e.target===overlay){e.preventDefault();overlay.remove();}
   },true);
 
   function uid(){return 'lv-'+Date.now()+Math.random().toString(36).slice(2,7)}
@@ -176,12 +187,13 @@
   const style=document.getElementById('lv-final-interaction-style')||document.createElement('style');
   style.id='lv-final-interaction-style';
   style.textContent=`
-    #lvCityPickerOverlay{position:fixed;inset:0;z-index:20000;background:rgba(23,23,42,.58);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto}
-    .lv-city-sheet{width:min(720px,100%);max-height:88vh;overflow:hidden;background:#f7f8fc;border-radius:28px 28px 0 0;padding:20px;box-shadow:0 -12px 50px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:10px;pointer-events:auto}
+    #lvCityPickerOverlay{position:absolute;inset:0;z-index:99999;background:rgba(23,23,42,.72);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto}
+    #lvCityPickerOverlay .lv-city-sheet{width:min(720px,100%);max-height:88vh;overflow:hidden;background:#f7f8fc;border-radius:28px 28px 0 0;padding:20px;box-shadow:0 -12px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:10px;pointer-events:auto}
     .lv-city-head{display:flex;justify-content:space-between;align-items:center;font-size:20px}.lv-city-head button{background:#efedff;color:#5d4de5;border-radius:12px;padding:9px 13px;font-weight:800}
     .lv-city-picked{display:flex;gap:7px;flex-wrap:wrap;min-height:32px}.lv-city-picked>span{background:#efedff;color:#5d4de5;padding:7px 10px;border-radius:11px;font-size:12px}.lv-city-picked button{background:none;color:#5d4de5;padding:0 0 0 5px}.lv-city-none{background:transparent!important;color:#999!important;padding-left:0!important}
     .lv-city-search{width:100%;padding:13px 14px;border:1px solid #e5e2f5;border-radius:14px;background:#fff;outline:0}.lv-city-hint{font-size:11px;color:#888}.lv-city-list{overflow:auto;display:grid;gap:7px;min-height:120px}.lv-city-option{padding:12px 13px;border-radius:13px;background:#fff;text-align:left;display:flex;justify-content:space-between;border:1px solid transparent}.lv-city-option.on{background:#efedff;border-color:#d9d3ff;color:#5d4de5}.lv-city-option small{color:#999}.lv-city-empty{padding:20px;text-align:center;color:#999}.lv-city-confirm{width:100%;padding:14px;border-radius:15px;background:#6958f5;color:#fff;font-weight:900}
     .lv-destination-field{width:100%;padding:13px 14px;border:1px solid #e9e7f2;border-radius:14px;background:#fff;text-align:left;color:#777;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10001;pointer-events:auto;cursor:pointer}.lv-destination-field span{color:#5d4de5;font-weight:800}.lv-destination-field.has{color:#333}.lv-newtrip-form .mode{text-align:left}.lv-newtrip-form .mode small{display:block;color:#999;font-size:10px;margin-top:3px}.lv-newtrip-form .mode.on small{color:#777}
+    #modal{z-index:10000}
   `;
   if(!style.parentNode)document.head.appendChild(style);
 })();
