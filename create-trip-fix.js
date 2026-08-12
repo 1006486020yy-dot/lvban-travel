@@ -1,10 +1,11 @@
-/* 旅伴旅行管家 · 新建行程表单最终修复 v3
+/* 旅伴旅行管家 · 新建行程表单全国城市数据版 v4
    目的地：点击后打开独立选择框；支持搜索、多选城市。
+   城市来源：window.LVBAN_DATA.cities（全国旅游数据库），不再使用硬编码城市名单。
    多城市创建成功后：弹出“每个城市玩几天”分配框，并把结果保存到当前行程。
 */
 (function(){
-  const cities=['厦门','福州','泉州','平潭','上海','杭州','北京','广州','深圳','成都','重庆','西安','南京','苏州','三亚','珠海','青岛','大连','武汉','长沙','昆明','大理','丽江','桂林','张家界','香港','澳门','东京','大阪','京都','首尔','新加坡','曼谷','巴黎','伦敦','罗马'];
-  const $=s=>document.querySelector(s);
+  const cities=Array.isArray(window.LVBAN_DATA?.cities)&&window.LVBAN_DATA.cities.length?window.LVBAN_DATA.cities:['厦门','福州','泉州','平潭'];
+  const $=(s,root=document)=>root.querySelector(s);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   function injectStyle(){
@@ -50,86 +51,36 @@
     const render=()=>{
       const q=search.value.trim().toLowerCase();
       const list=q?cities.filter(c=>c.toLowerCase().includes(q)):cities;
-      grid.innerHTML=list.length?list.map(c=>`<button type="button" class="lv-city-pick ${picked.has(c)?'on':''}" data-city="${esc(c)}">${esc(c)}</button>`).join(''):'<div style="grid-column:1/-1;padding:16px;color:var(--muted);font-size:12px">没有匹配的常用城市</div>';
-      if(q&&!cities.some(c=>c.toLowerCase()===q)){
-        custom.textContent=`＋ 使用“${search.value.trim()}”作为自定义目的地`;
-        custom.classList.add('show');
-      }else custom.classList.remove('show');
-      count.textContent=`已选择 ${picked.size} 个城市`;
-      confirmBtn.disabled=picked.size===0;
+      grid.innerHTML=list.length?list.map(c=>`<button type="button" class="lv-city-pick ${picked.has(c)?'on':''}" data-city="${esc(c)}">${esc(c)}</button>`).join(''):'<div style="grid-column:1/-1;padding:16px;color:var(--muted);font-size:12px">没有匹配的城市</div>';
+      if(q&&!cities.some(c=>c.toLowerCase()===q)){custom.textContent=`＋ 使用“${search.value.trim()}”作为自定义目的地`;custom.classList.add('show')}else custom.classList.remove('show');
+      count.textContent=`已选择 ${picked.size} 个城市`;confirmBtn.disabled=picked.size===0;
     };
-    render();
-    search.oninput=render;
+    render();search.oninput=render;
     grid.onclick=e=>{const b=e.target.closest('[data-city]');if(!b)return;const c=b.dataset.city;picked.has(c)?picked.delete(c):picked.add(c);render()};
     custom.onclick=()=>{const c=search.value.trim();if(!c)return;picked.add(c);render()};
-    $('.lv-modal-close',mask).onclick=()=>mask.remove();
-    mask.onclick=e=>{if(e.target===mask)mask.remove()};
-    confirmBtn.onclick=()=>{onDone([...picked]);mask.remove()};
-    setTimeout(()=>search.focus(),0);
+    $('.lv-modal-close',mask).onclick=()=>mask.remove();mask.onclick=e=>{if(e.target===mask)mask.remove()};confirmBtn.onclick=()=>{onDone([...picked]);mask.remove()};setTimeout(()=>search.focus(),0);
   }
 
   function durationPicker(trip,citiesSelected){
     const start=new Date(String(trip.start||'').slice(0,10)+'T00:00:00');const end=new Date(String(trip.end||trip.start||'').slice(0,10)+'T00:00:00');
-    const total=Math.max(1,Math.round((end-start)/86400000)+1);
-    const base=Math.floor(total/citiesSelected.length),rem=total%citiesSelected.length;
-    const values=citiesSelected.map((c,i)=>base+(i<rem?1:0));
+    const total=Math.max(1,Math.round((end-start)/86400000)+1),base=Math.floor(total/citiesSelected.length),rem=total%citiesSelected.length,values=citiesSelected.map((c,i)=>base+(i<rem?1:0));
     const mask=document.createElement('div');mask.className='lv-days-modal-mask';
-    mask.innerHTML=`<div class="lv-days-modal" role="dialog" aria-modal="true">
-      <div class="lv-days-modal-head"><h3>安排每个城市玩几天</h3><button class="lv-modal-close" type="button">×</button></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:13px">你的行程共 <b style="color:var(--p)">${total} 天</b>，请分配到下面的城市。后续可以在行程里继续调整。</div>
-      <div class="lv-duration-list">${citiesSelected.map((c,i)=>`<div class="lv-duration-row"><div class="lv-duration-city">${esc(c)}<small>第 ${i+1} 个目的地</small></div><input class="lv-duration-input" data-city="${esc(c)}" type="number" min="1" max="${total}" value="${values[i]}"></div>`).join('')}</div>
-      <div class="lv-days-modal-foot"><span id="lvDaysStatus" class="lv-days-status"></span><button id="lvDaysConfirm" class="lv-primary" type="button">保存分配</button></div>
-    </div>`;
-    document.body.appendChild(mask);
-    const status=$('#lvDaysStatus',mask),btn=$('#lvDaysConfirm',mask),inputs=[...mask.querySelectorAll('.lv-duration-input')];
-    const check=()=>{const sum=inputs.reduce((n,x)=>n+Math.max(0,Number(x.value)||0),0);const ok=sum===total;status.textContent=ok?`已分配 ${sum}/${total} 天`:`当前 ${sum}/${total} 天，还需 ${total-sum>0?total-sum+' 天':'减少 '+(sum-total)+' 天'}`;status.className='lv-days-status '+(ok?'ok':'bad');btn.disabled=!ok;return ok};
-    inputs.forEach(x=>x.oninput=check);check();
-    $('.lv-modal-close',mask).onclick=()=>mask.remove();
-    mask.onclick=e=>{if(e.target===mask)mask.remove()};
-    btn.onclick=()=>{if(!check())return;trip.cityDurations=inputs.map(x=>({city:x.dataset.city,days:Number(x.value)}));trip.city=trip.cityDurations.map(x=>x.city).join(' · ');window.save?.();mask.remove();window.renderTrips?.();window.renderHome?.();window.toast?.('已保存各城市停留天数')};
+    mask.innerHTML=`<div class="lv-days-modal" role="dialog" aria-modal="true"><div class="lv-days-modal-head"><h3>安排每个城市玩几天</h3><button class="lv-modal-close" type="button">×</button></div><div style="font-size:12px;color:var(--muted);margin-bottom:13px">你的行程共 <b style="color:var(--p)">${total} 天</b>，请分配到下面的城市。后续可以在行程里继续调整。</div><div class="lv-duration-list">${citiesSelected.map((c,i)=>`<div class="lv-duration-row"><div class="lv-duration-city">${esc(c)}<small>第 ${i+1} 个目的地</small></div><input class="lv-duration-input" data-city="${esc(c)}" type="number" min="1" max="${total}" value="${values[i]}"></div>`).join('')}</div><div class="lv-days-modal-foot"><span id="lvDaysStatus" class="lv-days-status"></span><button id="lvDaysConfirm" class="lv-primary" type="button">保存分配</button></div></div>`;
+    document.body.appendChild(mask);const status=$('#lvDaysStatus',mask),btn=$('#lvDaysConfirm',mask),inputs=[...mask.querySelectorAll('.lv-duration-input')];
+    const check=()=>{const sum=inputs.reduce((n,x)=>n+Math.max(0,Number(x.value)||0),0),ok=sum===total;status.textContent=ok?`已分配 ${sum}/${total} 天`:`当前 ${sum}/${total} 天，还需 ${total-sum>0?total-sum+' 天':'减少 '+(sum-total)+' 天'}`;status.className='lv-days-status '+(ok?'ok':'bad');btn.disabled=!ok;return ok};
+    inputs.forEach(x=>x.oninput=check);check();$('.lv-modal-close',mask).onclick=()=>mask.remove();mask.onclick=e=>{if(e.target===mask)mask.remove()};btn.onclick=()=>{if(!check())return;trip.cityDurations=inputs.map(x=>({city:x.dataset.city,days:Number(x.value)}));trip.city=trip.cityDurations.map(x=>x.city).join(' · ');window.save?.();mask.remove();window.renderTrips?.();window.renderHome?.();window.toast?.('已保存各城市停留天数')};
   }
 
   function openNewTrip(){
-    const m=$('#modal');if(!m)return;injectStyle();
-    $('#modalTitle').textContent='新建行程';
-    $('#modalBody').innerHTML=`<div class="lv-create-flow"><div class="form">
-      <label>行程名称</label><input id="ntName" type="text" placeholder="例如：国庆厦门慢旅行" autocomplete="off">
-      <label>目的地</label>
-      <div class="lv-destination-field"><input id="ntCity" type="text" placeholder="点击选择城市，可多选" autocomplete="off" readonly><button type="button" class="lv-destination-action">选择城市</button></div>
-      <div id="lvSelectedCities" class="lv-selected-city-summary"></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:1px">点击上方输入框打开选择框，支持搜索和多选城市</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>开始日期</label><input id="ntStart" type="date"></div><div><label>结束日期</label><input id="ntEnd" type="date"></div></div>
-      <label class="lv-route-box" for="ntAlternate"><input id="ntAlternate" type="checkbox"><span><b>是否有备选路线</b><small>只有勾选后，才会出现方案 A / 方案 B</small></span></label>
-      <div class="lv-create-mode"><div class="lv-create-mode-title">你想怎么创建？</div><div class="lv-choice-row"><button type="button" class="lv-choice on" data-mode="manual"><b>我自己安排</b><span>自己添加日期和详细行程</span></button><button type="button" class="lv-choice" data-mode="ai"><b>让 AI 帮我规划</b><span>创建后进入 AI 规划</span></button></div></div>
-      <button type="button" class="lv-create-submit" id="lvCreateSubmit">创建行程</button>
-    </div></div>`;
-    m.classList.add('show');window._createMode='manual';window._selectedCities=[];
-    const input=$('#ntCity'),summary=$('#lvSelectedCities');
+    const m=$('#modal');if(!m)return;injectStyle();$('#modalTitle').textContent='新建行程';
+    $('#modalBody').innerHTML=`<div class="lv-create-flow"><div class="form"><label>行程名称</label><input id="ntName" type="text" placeholder="例如：国庆厦门慢旅行" autocomplete="off"><label>目的地</label><div class="lv-destination-field"><input id="ntCity" type="text" placeholder="点击选择城市，可多选" autocomplete="off" readonly><button type="button" class="lv-destination-action">选择城市</button></div><div id="lvSelectedCities" class="lv-selected-city-summary"></div><div style="font-size:11px;color:var(--muted);margin-top:1px">点击上方输入框打开选择框，支持搜索和多选城市</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label>开始日期</label><input id="ntStart" type="date"></div><div><label>结束日期</label><input id="ntEnd" type="date"></div></div><label class="lv-route-box" for="ntAlternate"><input id="ntAlternate" type="checkbox"><span><b>是否有备选路线</b><small>只有勾选后，才会出现方案 A / 方案 B</small></span></label><div class="lv-create-mode"><div class="lv-create-mode-title">你想怎么创建？</div><div class="lv-choice-row"><button type="button" class="lv-choice on" data-mode="manual"><b>我自己安排</b><span>自己添加日期和详细行程</span></button><button type="button" class="lv-choice" data-mode="ai"><b>让 AI 帮我规划</b><span>创建后进入 AI 规划</span></button></div></div><button type="button" class="lv-create-submit" id="lvCreateSubmit">创建行程</button></div></div>`;
+    m.classList.add('show');window._createMode='manual';window._selectedCities=[];const input=$('#ntCity'),summary=$('#lvSelectedCities');
     const renderSelected=()=>{summary.innerHTML=window._selectedCities.map(c=>`<span class="lv-selected-city">${esc(c)}</span>`).join('');input.value=window._selectedCities.join(' · ')};
-    const openPicker=()=>cityPicker(window._selectedCities,list=>{window._selectedCities=list;renderSelected()});
-    input.onclick=openPicker;input.onfocus=openPicker;
-    document.querySelector('.lv-destination-field').onclick=openPicker;
+    const openPicker=()=>cityPicker(window._selectedCities,list=>{window._selectedCities=list;renderSelected()});input.onclick=openPicker;input.onfocus=openPicker;$('.lv-destination-field').onclick=openPicker;
     document.querySelectorAll('.lv-choice').forEach(b=>b.onclick=()=>{window._createMode=b.dataset.mode;document.querySelectorAll('.lv-choice').forEach(x=>x.classList.toggle('on',x===b))});
-
     const originalCreate=window.createTripFromForm;
-    $('#lvCreateSubmit').onclick=()=>{
-      const name=$('#ntName')?.value.trim(),start=$('#ntStart')?.value,end=$('#ntEnd')?.value;
-      if(!name)return window.toast?.('请先填写行程名称')||alert('请先填写行程名称');
-      if(!start||!end)return window.toast?.('请选择开始和结束日期')||alert('请选择开始和结束日期');
-      if(end<start)return window.toast?.('结束日期不能早于开始日期')||alert('结束日期不能早于开始日期');
-      if(!window._selectedCities.length)return window.toast?.('请选择至少一个目的地')||alert('请选择至少一个目的地');
-      /* 兼容现有创建逻辑：把多城市作为一个目的地字符串交给原创建函数。 */
-      input.value=window._selectedCities.join(' · ');
-      const before=(window.db?.()?.trips||[]).map(t=>t.id);
-      if(typeof originalCreate==='function')originalCreate();else window.createTripFromForm?.();
-      if(window._selectedCities.length>1){
-        const list=window.db?.()?.trips||[];const created=list.find(t=>!before.includes(t.id))||list[0];
-        if(created){created.city=window._selectedCities.join(' · ');window.save?.();durationPicker(created,window._selectedCities)}
-      }
-    };
-    /* 若原创建逻辑在当前版本是异步/覆盖，仍确保模式和目的地状态可读取。 */
+    $('#lvCreateSubmit').onclick=()=>{const name=$('#ntName')?.value.trim(),start=$('#ntStart')?.value,end=$('#ntEnd')?.value;if(!name)return window.toast?.('请先填写行程名称')||alert('请先填写行程名称');if(!start||!end)return window.toast?.('请选择开始和结束日期')||alert('请选择开始和结束日期');if(end<start)return window.toast?.('结束日期不能早于开始日期')||alert('结束日期不能早于开始日期');if(!window._selectedCities.length)return window.toast?.('请选择至少一个目的地')||alert('请选择至少一个目的地');input.value=window._selectedCities.join(' · ');const before=(window.db?.()?.trips||[]).map(t=>t.id);if(typeof originalCreate==='function')originalCreate();else window.createTripFromForm?.();if(window._selectedCities.length>1){const list=window.db?.()?.trips||[];const created=list.find(t=>!before.includes(t.id))||list[0];if(created){created.city=window._selectedCities.join(' · ');window.save?.();durationPicker(created,window._selectedCities)}}};
   }
-
   function boot(){window.openNewTrip=openNewTrip}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
