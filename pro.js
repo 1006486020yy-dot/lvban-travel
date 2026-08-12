@@ -1,169 +1,22 @@
-/* 旅伴旅行管家 Pro · 行程增强 */
+/* 旅伴旅行管家 Pro · 智能日程增强 v2 */
 (function(){
   'use strict';
-
-  function migrate(){
-    try{
-      var a=JSON.parse(localStorage.getItem('lvban-trips')||'[]');
-      if(!Array.isArray(a))return;
-      var changed=false;
-      function d(v){if(!v)return null;var x=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(x)?null:x;}
-      a.forEach(function(t){
-        if(typeof t.hasBackup!=='boolean'){t.hasBackup=false;changed=true;}
-        if(!Array.isArray(t.schedulesA)){
-          var s=d(t.start),e=d(t.end),days=[];
-          if(s&&e&&e>=s){for(var x=new Date(s);x<=e;x.setDate(x.getDate()+1))days.push({date:x.toISOString().slice(0,10),title:'待安排',items:[]});}
-          t.schedulesA=days;changed=true;
-        }
-        if(!t.hasBackup)t.schedulesB=null;
-      });
-      if(changed)localStorage.setItem('lvban-trips',JSON.stringify(a));
-    }catch(e){}
+  function migrate(){try{var a=JSON.parse(localStorage.getItem('lvban-trips')||'[]');if(!Array.isArray(a))return;var changed=false;a.forEach(function(t){if(typeof t.hasBackup!=='boolean'){t.hasBackup=!!t.hasAlternateRoutes;changed=true;}if(!t.hasBackup)t.schedulesB=null;if(Array.isArray(t.plans))t.plans.forEach(function(p){(p.days||[]).forEach(function(day){if(!Array.isArray(day.items)){day.items=[];changed=true;}})});});if(changed)localStorage.setItem('lvban-trips',JSON.stringify(a));}catch(e){}}
+  function source(){var d=window.LVBAN_DATA||{},out=[];(Array.isArray(d.spots)?d.spots:[]).forEach(function(x){if(x&&x.name)out.push({type:'景点',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||'',transport:x.transport||''});});(Array.isArray(d.foods)?d.foods:[]).forEach(function(x){if(x&&x.name)out.push({type:'美食',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||'',transport:x.transport||''});});return out;}
+  function tripCities(){try{var t=window.currentTrip&&window.currentTrip(),raw=t&&t.city||'',known=(window.LVBAN_DATA&&window.LVBAN_DATA.cities)||['福州','平潭','泉州','厦门'],out=[];known.forEach(function(c){if(raw.indexOf(c)>=0)out.push(c);});if(!out.length&&raw)out=[raw];return out;}catch(e){return [];}}
+  function activeDay(){try{return window.currentPlan&&window.currentPlan()?.days?.[window.activeDay]||null;}catch(e){return null;}}
+  function currentCity(){var d=activeDay();if(d&&d.city)return d.city;try{var t=window.currentTrip&&window.currentTrip(),title=(d&&d.title)||'',cs=tripCities();for(var i=0;i<cs.length;i++)if(title.indexOf(cs[i])>=0)return cs[i];if(cs.length===1)return cs[0];if(t&&t.currentCity)return t.currentCity;}catch(e){}return '';}
+  function fullAddress(x,city){var a=String(x&&x.address||'').trim();if(!a)return '';if(/省|市|区|县|镇|乡|街|路|号/.test(a)&&(a.indexOf('市')>=0||a.indexOf('省')>=0||a.indexOf('县')>=0||a.indexOf('区')>=0)){if(city==='平潭'&&a.indexOf('福建')<0&&a.indexOf('福州')<0)return '福建省福州市'+a;if(city==='福州'&&a.indexOf('福建')<0&&a.indexOf('福州')<0)return '福建省福州市'+a;if(city==='泉州'&&a.indexOf('福建')<0&&a.indexOf('泉州')<0&&a.indexOf('石狮')<0)return '福建省泉州市'+a;if(city==='厦门'&&a.indexOf('福建')<0&&a.indexOf('厦门')<0)return '福建省厦门市'+a;return a;}if(city==='福州')return '福建省福州市'+a;if(city==='平潭')return a.indexOf('平潭')===0?'福建省福州市'+a:'福建省福州市平潭县'+a;if(city==='泉州')return '福建省泉州市'+a;if(city==='厦门')return '福建省厦门市'+a;return city?a+'（'+city+'）':a;}
+  function matches(q,city){var s=source(),qq=String(q||'').trim().toLowerCase(),c=city||currentCity(),arr=s.filter(function(x){if(c&&x.city&&x.city!==c)return false;if(!qq)return true;return (x.name+' '+x.address+' '+x.city).toLowerCase().indexOf(qq)>=0;});if(!arr.length&&qq)arr=s.filter(function(x){return (x.name+' '+x.address+' '+x.city).toLowerCase().indexOf(qq)>=0;});return arr;}
+  function installStyle(){if(document.getElementById('lvbanSmartEventStyle'))return;var st=document.createElement('style');st.id='lvbanSmartEventStyle';st.textContent='.lvban-smart-wrap{margin:0 0 8px;padding:10px 0}.lvban-smart-title{font-size:12px;color:#77788b;font-weight:700;margin-bottom:7px}.lvban-smart-city{width:100%;padding:10px 12px;border:1px solid #e4e1f5;border-radius:14px;background:#fff;color:#333;margin-bottom:8px}.lvban-smart-recommend{display:flex;flex-wrap:wrap;gap:8px}.lvban-smart-recommend button{padding:8px 11px;border:1px solid #e4e1f5;border-radius:13px;background:#fff;color:#5d4de5;font-size:12px;font-weight:700;cursor:pointer}.lvban-smart-recommend button:hover{background:#efedff}.lvban-smart-match{font-size:11px;color:#6958f5;margin:-2px 0 7px;line-height:1.5}.lvban-smart-meta{display:block;font-size:10px;color:#999;margin-top:2px;font-weight:500}';document.head.appendChild(st);}
+  function enhanceEventForm(){var body=document.getElementById('modalBody'),title=document.getElementById('modalTitle');if(!body||!title||String(title.textContent||'').trim()!=='添加日程')return;var name=document.getElementById('diName'),addr=document.getElementById('diAddr');if(!name||!addr)return;installStyle();var old=document.getElementById('lvbanSmartWrap');if(old)old.remove();var oldMatch=document.getElementById('lvbanMatchText');if(oldMatch)oldMatch.remove();var cities=tripCities(),selected=currentCity()||cities[0]||'',wrap=document.createElement('div');wrap.id='lvbanSmartWrap';wrap.className='lvban-smart-wrap';var cityLabel=document.createElement('div');cityLabel.className='lvban-smart-title';cityLabel.textContent='智能推荐 · '+(selected||'当前目的地');wrap.appendChild(cityLabel);var citySelect=null;if(cities.length>1){citySelect=document.createElement('select');citySelect.className='lvban-smart-city';cities.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;o.selected=c===selected;citySelect.appendChild(o);});wrap.appendChild(citySelect);}var list=document.createElement('div');list.className='lvban-smart-recommend';wrap.appendChild(list);name.parentNode.insertBefore(wrap,name);
+    function selectedCity(){return citySelect?citySelect.value:selected;}
+    function setValue(x){var c=x.city||selectedCity();name.value=x.name||'';addr.value=fullAddress(x,c);var note=document.getElementById('diNote');if(note&&!note.value){var n=[];if(x.note)n.push(x.note);if(x.transport)n.push('交通：'+x.transport);note.value=n.join('\n');}if(activeDay())activeDay().city=c;name.dispatchEvent(new Event('input',{bubbles:true}));addr.dispatchEvent(new Event('input',{bubbles:true}));var m=document.getElementById('lvbanMatchText');if(m)m.remove();m=document.createElement('div');m.id='lvbanMatchText';m.className='lvban-smart-match';m.textContent='✓ 已识别：'+c+' · '+x.name+'｜完整地址已自动填入';addr.parentNode.insertBefore(m,addr);}
+    function render(q){var c=selectedCity(),r=matches(q,c).slice(0,6);list.innerHTML='';if(!q){var lb=document.createElement('span');lb.className='lvban-smart-meta';lb.textContent=c?'根据 '+c+' 推荐':'请选择城市后推荐';list.appendChild(lb);}r.forEach(function(x){var b=document.createElement('button');b.type='button';b.textContent=x.name;b.title=fullAddress(x,c);b.onclick=function(){setValue(x);};var small=document.createElement('span');small.className='lvban-smart-meta';small.textContent=fullAddress(x,c);b.appendChild(small);list.appendChild(b);});if(!r.length){var t=document.createElement('span');t.className='lvban-smart-meta';t.textContent='暂无本地匹配，可继续手动填写';list.appendChild(t);}}
+    if(citySelect)citySelect.addEventListener('change',function(){selected=citySelect.value;cityLabel.textContent='智能推荐 · '+selected;render(name.value);});
+    if(!name.dataset.lvbanSmartBound){name.dataset.lvbanSmartBound='1';name.addEventListener('input',function(){render(name.value);});name.addEventListener('blur',function(){var q=name.value.trim().toLowerCase();if(!q)return;var r=matches(q,selectedCity()),exact=r.find(function(x){return String(x.name||'').toLowerCase()===q;});if(exact)setValue(exact);else if(r.length===1&&q.length>=2)setValue(r[0]);});}
+    render('');
   }
-
-  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-
-  function buildSource(){
-    var out=[];
-    var d=window.LVBAN_DATA||{};
-    if(Array.isArray(d.spots))d.spots.forEach(function(x){
-      if(x&&x.name)out.push({type:'景点',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||''});
-    });
-    if(Array.isArray(d.foods))d.foods.forEach(function(x){
-      if(x&&x.name)out.push({type:'美食',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||''});
-    });
-    return out;
-  }
-
-  function currentCity(){
-    try{
-      var s=window.schedules;
-      var st=window.state;
-      if(!s||!st||!s[st.plan])return '';
-      var d=s[st.plan][st.day];
-      var title=(d&&d.title)||'';
-      var cities=(window.LVBAN_DATA&&window.LVBAN_DATA.cities)||['福州','平潭','泉州','厦门'];
-      for(var i=0;i<cities.length;i++)if(title.indexOf(cities[i])>=0)return cities[i];
-    }catch(e){}
-    return '';
-  }
-
-  function matches(q){
-    var source=buildSource();
-    q=(q||'').trim().toLowerCase();
-    var city=currentCity();
-    var arr=source.filter(function(x){
-      if(city&&x.city&&x.city!==city)return false;
-      if(!q)return true;
-      return (x.name+' '+x.address+' '+x.city).toLowerCase().indexOf(q)>=0;
-    });
-    if(!arr.length&&q){
-      arr=source.filter(function(x){return (x.name+' '+x.address+' '+x.city).toLowerCase().indexOf(q)>=0;});
-    }
-    return arr.slice(0,10);
-  }
-
-  function installStyle(){
-    if(document.getElementById('lvbanSmartEventStyle'))return;
-    var st=document.createElement('style');
-    st.id='lvbanSmartEventStyle';
-    st.textContent=''+
-      '.lvban-smart-recommend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}'+
-      '.lvban-smart-recommend button{padding:8px 11px;border:1px solid #e4e1f5;border-radius:13px;background:#fff;color:#5d4de5;font-size:12px;font-weight:700;cursor:pointer}'+
-      '.lvban-smart-recommend button:hover{background:#efedff}'+
-      '.lvban-smart-match{font-size:11px;color:#6958f5;margin:-3px 0 7px;line-height:1.5}';
-    document.head.appendChild(st);
-  }
-
-  function enhanceEventForm(){
-    var body=document.getElementById('modalBody');
-    var title=document.getElementById('modalTitle');
-    if(!body||!title)return;
-    if((title.textContent||'').trim()!=='添加日程')return;
-
-    var name=document.getElementById('xName') || body.querySelector('input[placeholder*="南普陀"], input[placeholder*="安排"]');
-    if(!name)return;
-    var addr=document.getElementById('xAddr') || body.querySelector('input[placeholder*="地址"]');
-    if(!addr)return;
-
-    installStyle();
-
-    var old=document.getElementById('lvbanRecommendBox');
-    if(old)old.remove();
-    var match=document.getElementById('lvbanMatchText');
-    if(match)match.remove();
-
-    var box=document.createElement('div');
-    box.id='lvbanRecommendBox';
-    box.className='lvban-smart-recommend';
-    var label=document.createElement('div');
-    label.style.cssText='width:100%;font-size:12px;color:#77788b;margin-bottom:0';
-    label.textContent=currentCity()?'推荐景点 · '+currentCity():'推荐景点 / 美食';
-    box.appendChild(label);
-
-    var initial=matches('');
-    initial.slice(0,6).forEach(function(x){
-      var b=document.createElement('button');
-      b.type='button';
-      b.textContent=x.name;
-      b.title=x.address||'';
-      b.onclick=function(){selectItem(x);};
-      box.appendChild(b);
-    });
-
-    name.parentNode.insertBefore(box,name.nextSibling);
-
-    function selectItem(x){
-      name.value=x.name;
-      if(addr)addr.value=x.address||'';
-      var note=document.getElementById('xNote') || body.querySelector('textarea');
-      if(note&&!note.value&&x.note)note.value=x.note;
-      name.dispatchEvent(new Event('input',{bubbles:true}));
-      var oldMatch=document.getElementById('lvbanMatchText');
-      if(oldMatch)oldMatch.remove();
-      var m=document.createElement('div');
-      m.id='lvbanMatchText';m.className='lvban-smart-match';
-      m.textContent='✓ 已识别：'+(x.city?x.city+' · ':'')+x.name+'｜地址已自动填入';
-      addr.parentNode.insertBefore(m,addr);
-    }
-
-    function refresh(q){
-      var result=matches(q);
-      box.innerHTML='';
-      var lab=document.createElement('div');
-      lab.style.cssText='width:100%;font-size:12px;color:#77788b;margin-bottom:0';
-      lab.textContent=q?'匹配结果':'推荐景点 · '+(currentCity()||'当前目的地');
-      box.appendChild(lab);
-      result.slice(0,6).forEach(function(x){
-        var b=document.createElement('button');b.type='button';b.textContent=x.name;b.title=x.address||'';b.onclick=function(){selectItem(x);};box.appendChild(b);
-      });
-      if(!result.length){
-        var t=document.createElement('span');t.style.cssText='font-size:11px;color:#999;padding:7px 0';t.textContent='暂无匹配，可继续手动填写';box.appendChild(t);
-      }
-    }
-
-    if(!name.dataset.lvbanBound){
-      name.dataset.lvbanBound='1';
-      name.addEventListener('input',function(){refresh(name.value);});
-      name.addEventListener('blur',function(){
-        var q=name.value.trim().toLowerCase();
-        if(!q)return;
-        var r=matches(q);
-        var exact=r.find(function(x){return x.name.toLowerCase()===q;});
-        if(exact)selectItem(exact);
-      });
-    }
-  }
-
-  function observe(){
-    if(!document.body)return;
-    var run=function(){setTimeout(enhanceEventForm,20);};
-    var mo=new MutationObserver(run);
-    mo.observe(document.body,{subtree:true,childList:true});
-    setInterval(enhanceEventForm,700);
-    run();
-  }
-
-  migrate();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe);else observe();
+  function observe(){if(!document.body)return;var run=function(){setTimeout(enhanceEventForm,30);};new MutationObserver(run).observe(document.body,{subtree:true,childList:true});setInterval(enhanceEventForm,600);run();}
+  migrate();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe);else observe();
 })();
