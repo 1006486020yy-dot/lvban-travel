@@ -1,24 +1,89 @@
-/* 旅伴旅行管家 Pro · 全国数据库智能日程增强 v4 */
+/* 旅伴旅行管家 Pro · 智能日程增强（轻量版）
+ * 重点：不再使用高频 setInterval / 自触发 MutationObserver，避免页面卡顿。
+ */
 (function(){
   'use strict';
-  function migrate(){try{var a=JSON.parse(localStorage.getItem('lvban-trips')||'[]');if(!Array.isArray(a))return;var changed=false;a.forEach(function(t){if(typeof t.hasBackup!=='boolean'){t.hasBackup=!!t.hasAlternateRoutes;changed=true;}if(!t.hasBackup)t.schedulesB=null;if(Array.isArray(t.plans))t.plans.forEach(function(p){(p.days||[]).forEach(function(day){if(!Array.isArray(day.items)){day.items=[];changed=true;}})});});if(changed)localStorage.setItem('lvban-trips',JSON.stringify(a));}catch(e){}}
-  function source(){var d=window.LVBAN_DATA||{},out=[];(Array.isArray(d.spots)?d.spots:[]).forEach(function(x){if(x&&x.name)out.push({type:'景点',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||x.description||'',transport:x.transport||'',latlng:x.latlng||'',rating:Number(x.rating)||0,tags:x.tags||'',duration:x.duration||''});});(Array.isArray(d.foods)?d.foods:[]).forEach(function(x){if(x&&x.name)out.push({type:'美食',city:x.city||'',name:x.name,address:x.address||'',note:x.highlight||x.dishes||'',transport:x.transport||'',latlng:x.latlng||'',rating:0,tags:x.tags||'',duration:''});});return out;}
-  function tripCities(){try{var t=window.currentTrip&&window.currentTrip(),raw=t&&t.city||'',known=(window.LVBAN_DATA&&window.LVBAN_DATA.cities)||['福州','平潭','泉州','厦门'],out=[];known.forEach(function(c){if(raw.indexOf(c)>=0)out.push(c);});if(!out.length&&raw)out=[raw];return out;}catch(e){return [];}}
-  function activeDay(){try{return window.currentPlan&&window.currentPlan()?.days?.[window.activeDay]||null;}catch(e){return null;}}
-  function currentCity(){var d=activeDay();if(d&&d.city)return d.city;try{var t=window.currentTrip&&window.currentTrip(),title=(d&&d.title)||'',cs=tripCities();for(var i=0;i<cs.length;i++)if(title.indexOf(cs[i])>=0)return cs[i];if(cs.length===1)return cs[0];if(t&&t.currentCity)return t.currentCity;}catch(e){}return '';}
-  function fullAddress(x,city){var a=String(x&&x.address||'').trim();if(!a)return '';if(/(省|自治区|直辖市|特别行政区)/.test(a)&&/(市|州|盟|区|县)/.test(a))return a;if(/^(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区)/.test(a))return a;if(/(市|州|盟|区|县|镇|乡|街|路|号)/.test(a)&&/(市|区|县|街|路|号)/.test(a)){if(city==='北京'&&!/北京市/.test(a))return '北京市'+a;if(city==='上海'&&!/上海市/.test(a))return '上海市'+a;if(city==='天津'&&!/天津市/.test(a))return '天津市'+a;if(city==='重庆'&&!/重庆市/.test(a))return '重庆市'+a;return a;}if(city==='北京')return '北京市'+a;if(city==='上海')return '上海市'+a;if(city==='天津')return '天津市'+a;if(city==='重庆')return '重庆市'+a;return city?a+'（'+city+'）':a;}
-  function matches(q,city){var s=source(),qq=String(q||'').trim().toLowerCase(),c=city||currentCity();var arr=s.filter(function(x){if(c&&x.city&&x.city!==c)return false;if(!qq)return true;return (x.name+' '+x.address+' '+x.city+' '+x.tags).toLowerCase().indexOf(qq)>=0;});if(!arr.length&&qq)arr=s.filter(function(x){return (x.name+' '+x.address+' '+x.city+' '+x.tags).toLowerCase().indexOf(qq)>=0;});arr.sort(function(a,b){var aq=qq&&String(a.name).toLowerCase()===qq?10000:0;var bq=qq&&String(b.name).toLowerCase()===qq?10000:0;var ar=(Number(a.rating)||0)*100;var br=(Number(b.rating)||0)*100;return (bq+br)-(aq+ar);});return arr;}
-  function installStyle(){if(document.getElementById('lvbanSmartEventStyle'))return;var st=document.createElement('style');st.id='lvbanSmartEventStyle';st.textContent='.lvban-smart-wrap{margin:0 0 8px;padding:10px 0}.lvban-smart-title{font-size:12px;color:#77788b;font-weight:700;margin-bottom:7px}.lvban-smart-city{width:100%;padding:10px 12px;border:1px solid #e4e1f5;border-radius:14px;background:#fff;color:#333;margin-bottom:8px}.lvban-smart-recommend{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:3}.lvban-smart-recommend button{display:block;position:relative;z-index:4;pointer-events:auto;min-width:130px;padding:8px 11px;border:1px solid #e4e1f5;border-radius:13px;background:#fff;color:#5d4de5;font-size:12px;font-weight:700;cursor:pointer;text-align:left}.lvban-smart-recommend button:hover{background:#efedff}.lvban-smart-recommend button:active{transform:scale(.98)}.lvban-smart-meta{display:block;font-size:10px;color:#999;margin-top:2px;font-weight:500}.lvban-smart-match{font-size:11px;color:#6958f5;margin:-2px 0 7px;line-height:1.5}';document.head.appendChild(st);}
-  function enhanceEventForm(){var body=document.getElementById('modalBody'),title=document.getElementById('modalTitle');if(!body||!title||String(title.textContent||'').trim()!=='添加日程')return;var name=document.getElementById('diName'),addr=document.getElementById('diAddr');if(!name||!addr)return;installStyle();var old=document.getElementById('lvbanSmartWrap');if(old)old.remove();var oldMatch=document.getElementById('lvbanMatchText');if(oldMatch)oldMatch.remove();var cities=tripCities(),selected=currentCity()||cities[0]||'',wrap=document.createElement('div');wrap.id='lvbanSmartWrap';wrap.className='lvban-smart-wrap';var cityLabel=document.createElement('div');cityLabel.className='lvban-smart-title';cityLabel.textContent='智能推荐 · '+(selected||'当前目的地');wrap.appendChild(cityLabel);var citySelect=null;if(cities.length>1){citySelect=document.createElement('select');citySelect.className='lvban-smart-city';cities.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;o.selected=c===selected;citySelect.appendChild(o);});wrap.appendChild(citySelect);}var list=document.createElement('div');list.className='lvban-smart-recommend';wrap.appendChild(list);name.parentNode.insertBefore(wrap,name);
-    function selectedCity(){return citySelect?citySelect.value:selected;}
-    function setField(el,value){if(!el)return;el.value=value||'';try{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){var ev=document.createEvent('HTMLEvents');ev.initEvent('input',true,true);el.dispatchEvent(ev);}}
-    function setValue(x){var c=x.city||selectedCity();setField(name,x.name||'');setField(addr,fullAddress(x,c));var note=document.getElementById('diNote');if(note&&!note.value){var n=[];if(x.note)n.push(x.note);if(x.transport)n.push('交通：'+x.transport);if(x.duration)n.push('推荐游玩时间：'+x.duration);if(x.latlng)n.push('坐标：'+x.latlng);setField(note,n.join('\n'));}try{var d=activeDay();if(d&&c)d.city=c;}catch(e){}var m=document.getElementById('lvbanMatchText');if(m)m.remove();m=document.createElement('div');m.id='lvbanMatchText';m.className='lvban-smart-match';m.textContent='✓ 已选择：'+c+' · '+x.name+'｜完整地址已自动填入';addr.parentNode.insertBefore(m,addr);}
-    function render(q){var c=selectedCity(),r=matches(q,c).slice(0,6);list.innerHTML='';if(!q){var lb=document.createElement('span');lb.className='lvban-smart-meta';lb.textContent=c?'根据 '+c+' 推荐':'请选择城市后推荐';list.appendChild(lb);}r.forEach(function(x){var b=document.createElement('button');b.type='button';b.setAttribute('data-lvban-smart-name',x.name);b.setAttribute('data-lvban-smart-city',x.city||c);b.setAttribute('data-lvban-smart-address',fullAddress(x,c));b.textContent=x.name;b.title=fullAddress(x,c);var small=document.createElement('span');small.className='lvban-smart-meta';small.textContent=fullAddress(x,c);b.appendChild(small);list.appendChild(b);});if(!r.length){var t=document.createElement('span');t.className='lvban-smart-meta';t.textContent='暂无本地匹配，可继续手动填写';list.appendChild(t);}}
-    if(citySelect)citySelect.addEventListener('change',function(){selected=citySelect.value;cityLabel.textContent='智能推荐 · '+selected;render(name.value);});
-    if(!name.dataset.lvbanSmartBound){name.dataset.lvbanSmartBound='1';name.addEventListener('input',function(){render(name.value);});name.addEventListener('blur',function(){var q=name.value.trim().toLowerCase();if(!q)return;var r=matches(q,selectedCity()),exact=r.find(function(x){return String(x.name||'').toLowerCase()===q;});if(exact)setValue(exact);else if(r.length===1&&q.length>=2)setValue(r[0]);});}
-    if(!wrap.dataset.lvbanSmartClickBound){wrap.dataset.lvbanSmartClickBound='1';list.addEventListener('pointerdown',function(e){var b=e.target.closest('button[data-lvban-smart-name]');if(!b)return;e.preventDefault();e.stopPropagation();var n=b.getAttribute('data-lvban-smart-name')||'';var c=b.getAttribute('data-lvban-smart-city')||selectedCity();var a=b.getAttribute('data-lvban-smart-address')||'';var r=matches(n,c);var x=r.find(function(item){return item.name===n&&item.city===c})||r.find(function(item){return item.name===n})||{name:n,city:c,address:a};setValue(x);});list.addEventListener('click',function(e){var b=e.target.closest('button[data-lvban-smart-name]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();var n=b.getAttribute('data-lvban-smart-name')||'';var c=b.getAttribute('data-lvban-smart-city')||selectedCity();var a=b.getAttribute('data-lvban-smart-address')||'';var r=matches(n,c);var x=r.find(function(item){return item.name===n&&item.city===c})||r.find(function(item){return item.name===n})||{name:n,city:c,address:a};setValue(x);});}
+  const $=s=>document.querySelector(s);
+  const data=()=>window.LVBAN_DATA||{};
+  const normCity=s=>String(s||'').replace(/(省|市|自治区|特别行政区)$/,'').replace(/市$/,'');
+  function currentTrip(){try{return window.currentTrip&&window.currentTrip()||window.db?.trips?.find(x=>x.id===window.activeTrip)}catch(e){return null}}
+  function currentPlan(){const t=currentTrip();return t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0]||null}
+  function activeDay(){return currentPlan()?.days?.[window.activeDay]||null}
+  function tripCities(){
+    const t=currentTrip(), raw=String(t?.city||'');
+    const list=raw.split(/[·,，、/]/).map(normCity).filter(Boolean);
+    const d=activeDay();
+    if(d?.city) list.unshift(normCity(d.city));
+    if(d?.title){(data().cities||[]).forEach(c=>{const n=normCity(c);if(n&&d.title.includes(n))list.unshift(n)})}
+    return [...new Set(list)];
+  }
+  function fullAddress(x,city){
+    const a=String(x?.address||'').trim();
+    if(!a)return '';
+    if(/^(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区)/.test(a))return a;
+    const c=normCity(city);
+    if(c==='北京'&&!a.includes('北京市'))return '北京市'+a;
+    if(c==='上海'&&!a.includes('上海市'))return '上海市'+a;
+    if(c==='天津'&&!a.includes('天津市'))return '天津市'+a;
+    if(c==='重庆'&&!a.includes('重庆市'))return '重庆市'+a;
+    return a;
+  }
+  function source(){
+    const d=data(), out=[];
+    (Array.isArray(d.spots)?d.spots:[]).forEach(x=>{if(x?.name)out.push({type:'景点',city:normCity(x.city),name:x.name,address:x.address||'',note:x.highlight||x.description||'',transport:x.transport||'',latlng:x.latlng||'',rating:Number(x.rating)||0,duration:x.duration||'',tags:x.tags||''})});
+    (Array.isArray(d.foods)?d.foods:[]).forEach(x=>{if(x?.name)out.push({type:'美食',city:normCity(x.city),name:x.name,address:x.address||'',note:x.highlight||x.dishes||'',transport:x.transport||'',latlng:x.latlng||'',rating:Number(x.rating)||0,duration:'',tags:x.tags||''})});
+    return out;
+  }
+  function matches(q,city){
+    const qq=String(q||'').trim().toLowerCase(), c=normCity(city), all=source();
+    let arr=all.filter(x=>!c||!x.city||normCity(x.city)===c);
+    if(qq)arr=arr.filter(x=>(x.name+' '+x.address+' '+x.city+' '+x.tags+' '+x.note).toLowerCase().includes(qq));
+    arr.sort((a,b)=>(b.rating||0)-(a.rating||0));
+    return arr;
+  }
+  function style(){
+    if($('#lvbanSmartEventStyle'))return;
+    const s=document.createElement('style');s.id='lvbanSmartEventStyle';s.textContent=`
+      .lvban-smart-wrap{margin:2px 0 12px;padding:0}.lvban-smart-title{font-size:13px;font-weight:700;color:#6f6f83;margin:0 0 7px}.lvban-smart-city{width:100%;padding:10px 12px;border:1px solid #e5e2f5;border-radius:12px;background:#fff;color:#333;margin-bottom:8px}.lvban-smart-recommend{display:flex;gap:8px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none}.lvban-smart-recommend::-webkit-scrollbar{display:none}.lvban-smart-recommend button{flex:0 0 auto;min-width:150px;max-width:220px;padding:9px 11px;border:1px solid #e3e0f4;border-radius:13px;background:#fff;color:#5c4fe5;font-size:12px;font-weight:700;text-align:left;cursor:pointer}.lvban-smart-recommend button:active{transform:scale(.98)}.lvban-smart-meta{display:block;font-size:10px;line-height:1.4;color:#999;margin-top:3px;font-weight:500;white-space:normal}.lvban-smart-match{font-size:11px;color:#6254e8;margin:-3px 0 7px;line-height:1.4}.lvban-smart-empty{font-size:11px;color:#999;padding:5px 0}
+    `;document.head.appendChild(s);
+  }
+  function enhance(){
+    const body=$('#modalBody'), title=$('#modalTitle');
+    if(!body||String(title?.textContent||'').trim()!=='添加日程')return;
+    const name=$('#diName'), addr=$('#diAddr'); if(!name||!addr)return;
+    if($('#lvbanSmartWrap'))return;
+    style();
+    const cities=tripCities(); let selected=cities[0]||'';
+    const wrap=document.createElement('div');wrap.id='lvbanSmartWrap';wrap.className='lvban-smart-wrap';
+    const label=document.createElement('div');label.className='lvban-smart-title';label.textContent='智能推荐 · '+(selected||'当前目的地');wrap.appendChild(label);
+    let select=null;
+    if(cities.length>1){
+      select=document.createElement('select');select.className='lvban-smart-city';
+      cities.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;o.selected=c===selected;select.appendChild(o)});
+      wrap.appendChild(select);
+    }
+    const list=document.createElement('div');list.className='lvban-smart-recommend';wrap.appendChild(list);
+    name.parentNode.insertBefore(wrap,name);
+    const setField=(el,v)=>{if(!el)return;el.value=v||'';el.dispatchEvent(new Event('input',{bubbles:true}))};
+    const pick=x=>{
+      const c=normCity(x.city||selected);setField(name,x.name);setField(addr,fullAddress(x,c));
+      const note=$('#diNote');if(note&&!note.value){const n=[];if(x.note)n.push(x.note);if(x.transport)n.push('交通：'+x.transport);if(x.duration)n.push('推荐游玩时间：'+x.duration);setField(note,n.join('\n'))}
+      const d=activeDay();if(d&&c)d.city=c;
+      $('#lvbanMatchText')?.remove();const m=document.createElement('div');m.id='lvbanMatchText';m.className='lvban-smart-match';m.textContent='✓ 已选择 '+c+' · '+x.name+'，地址已自动填入';addr.parentNode.insertBefore(m,addr);
+    };
+    const render=q=>{
+      const c=select?select.value:selected, r=matches(q,c).slice(0,8);list.innerHTML='';
+      if(!q&&r.length) {const meta=document.createElement('span');meta.className='lvban-smart-meta';meta.textContent='根据 '+(c||'当前目的地')+' 推荐';list.appendChild(meta)}
+      r.forEach(x=>{const b=document.createElement('button');b.type='button';b.dataset.name=x.name;b.innerHTML='';const t=document.createElement('span');t.textContent=x.name;b.appendChild(t);const sm=document.createElement('span');sm.className='lvban-smart-meta';sm.textContent=fullAddress(x,c);b.appendChild(sm);list.appendChild(b)});
+      if(!r.length){const e=document.createElement('span');e.className='lvban-smart-empty';e.textContent='暂无匹配，可继续手动填写';list.appendChild(e)}
+    };
+    select?.addEventListener('change',()=>{selected=select.value;label.textContent='智能推荐 · '+selected;render(name.value)});
+    name.addEventListener('input',()=>render(name.value));
+    list.addEventListener('click',e=>{const b=e.target.closest('button[data-name]');if(!b)return;e.preventDefault();const c=select?select.value:selected;const r=matches(b.dataset.name,c);const x=r.find(v=>v.name===b.dataset.name)||r[0];if(x)pick(x)});
     render('');
   }
-  function observe(){if(!document.body)return;var run=function(){setTimeout(enhanceEventForm,30);};new MutationObserver(run).observe(document.body,{subtree:true,childList:true});setInterval(enhanceEventForm,600);run();}
-  migrate();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe);else observe();
+  // app.js 已先加载，这里只包一层添加日程入口，不轮询、不监听整棵 DOM。
+  const original=window.openDayEditor;
+  if(typeof original==='function')window.openDayEditor=function(){original();requestAnimationFrame(enhance)};
+  else document.addEventListener('DOMContentLoaded',()=>{const fn=window.openDayEditor;if(typeof fn==='function')window.openDayEditor=function(){fn();requestAnimationFrame(enhance)}});
 })();
