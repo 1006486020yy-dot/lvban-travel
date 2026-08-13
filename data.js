@@ -49,4 +49,10 @@
     window.dispatchEvent(new CustomEvent('lvban-data-error',{detail:err}));
     return window.LVBAN_DATA;
   });
+
+  // 只增强景点 / 美食 / 酒店；不修改行程、方案 A/B、AI、交通。
+  const s = document.createElement('script');
+  s.src = 'data/catalog-ui.js?v=20260813';
+  s.defer = true;
+  document.head.appendChild(s);
 })();
