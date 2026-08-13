@@ -27,7 +27,8 @@
     }
   }
 
+  /* 给现有异步渲染器留出加载时间，并覆盖 itinerary-layout-final 的周期性入口锁定。 */
   const timer=setInterval(restore,100);
   window.addEventListener('load',()=>setTimeout(restore,50));
-  setTimeout(()=>clearInterval(timer),30000);
+  setTimeout(()=>clearInterval(timer),300000);
 })();
