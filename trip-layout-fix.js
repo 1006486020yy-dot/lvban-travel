@@ -12,18 +12,16 @@
   .lv-trip-date-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.lv-trip-date-tabs::-webkit-scrollbar{display:none}
   .lv-trip-date-tab{min-width:92px;padding:9px 12px;text-align:center}.lv-trip-date-tab b{display:block;font-size:12px}.lv-trip-date-tab small{display:block;font-size:10px;margin-top:3px;opacity:.78}
   .lv-trip-section-label{font-size:12px;color:var(--muted);font-weight:800;margin:4px 0 7px}
-  .lv-trip-no-plan{display:none!important}
   `;
   function style(){if(document.getElementById('lv-trip-layout-style'))return;const s=document.createElement('style');s.id='lv-trip-layout-style';s.textContent=css;document.head.appendChild(s)}
   function trip(){return window.db?.trips?.find(x=>x.id===window.activeTrip)||window.db?.trips?.[0]}
   function plan(){const t=trip();return t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0]}
-  function hasAlternate(t){return !!(t&&(t.hasAlternateRoute||t.alternateRoute||t.useAlternateRoutes||t.hasBackupRoute||t.alternate===true))}
+  function hasAlternate(t){return !!(t&&(t.hasAlternateRoute===true||t.alternateRoute===true||t.useAlternateRoutes===true||t.hasBackupRoute===true||t.alternate===true))}
   function selectedCities(t){
     if(!t)return [];
     if(Array.isArray(t.cityDurations)&&t.cityDurations.length)return t.cityDurations.map(x=>x.city).filter(Boolean);
     const raw=String(t.city||'');
-    const parts=raw.split(/[·,、/|]+/).map(x=>x.trim()).filter(Boolean);
-    return [...new Set(parts)];
+    return [...new Set(raw.split(/[·,、/|]+/).map(x=>x.trim()).filter(Boolean))];
   }
   function dayCityMap(t,p){
     const days=p?.days||[];const out=[];
@@ -37,14 +35,11 @@
   function render(){
     const box=document.getElementById('tripDetail');const t=trip();if(!box||!t)return;
     const plans=t.plans||[];const showPlan=hasAlternate(t)&&plans.length>1;
-    if(!showPlan){window.activePlan=plans[0]?.id||window.activePlan;}
+    if(!showPlan)window.activePlan=plans[0]?.id||window.activePlan;
     const p=plan();if(!p)return;
     const days=p.days||[];const map=dayCityMap(t,p);const cities=selectedCities(t);
-    let activeCity=window.__lvTripCity;
-    if(!cities.includes(activeCity))activeCity=cities[0]||map[window.activeDay]||'';
-    window.__lvTripCity=activeCity;
-    let cityDayIndexes=days.map((d,i)=>i).filter(i=>!activeCity||map[i]===activeCity);
-    if(!cityDayIndexes.length)cityDayIndexes=days.map((d,i)=>i);
+    let activeCity=window.__lvTripCity;if(!cities.includes(activeCity))activeCity=cities[0]||map[window.activeDay]||'';window.__lvTripCity=activeCity;
+    let cityDayIndexes=days.map((d,i)=>i).filter(i=>!activeCity||map[i]===activeCity);if(!cityDayIndexes.length)cityDayIndexes=days.map((d,i)=>i);
     if(!cityDayIndexes.includes(window.activeDay))window.activeDay=cityDayIndexes[0]??0;
     const d=days[window.activeDay]||days[0];
     const cityTabs=cities.map(c=>`<button type="button" class="lv-trip-city-tab ${c===activeCity?'on':''}" data-city="${esc(c)}">${esc(c)}</button>`).join('');
@@ -54,13 +49,32 @@
     const cityBlock=cities.length?`<div class="lv-trip-section-label">选择城市</div><div class="lv-trip-city-tabs">${cityTabs}</div>`:'';
     const dateBlock=`<div class="lv-trip-section-label">${esc(activeCity||'行程日期')}</div><div class="lv-trip-date-tabs">${dateTabs}</div>`;
     const items=d?.items||[];
-    const detail=`<div class="card glass"><div class="crumb">${esc(d?.date||'')}</div><h3>${esc(d?.title||'待安排')}</h3><div class="sub">每天独立编辑 · 景点 / 美食 / 酒店 / 火车 / 航班 / 交通 / 备注</div></div><div class="timeline">${items.length?items.map((i,k)=>{i._index=k;return `<div class="it-card glass"><div class="it-time">${esc(i.time||'未定时间')} <span class="it-type">${esc(i.type||'日程')}</span></div><div class="it-title">${esc(i.name||'未命名日程')}</div><div class="it-address">📍 ${esc(i.address||'暂无地址')}</div>${i.budget?`<div class="data-meta">预算 ¥${i.budget}</div>`:''}${typeof window.actionButtons==='function'?window.actionButtons(i):`<div class="actions"><button class="mini" onclick='LvbanCopy(${JSON.stringify(i.name||'')})'>复制名称</button><button class="mini" onclick='LvbanCopy(${JSON.stringify(i.address||'')})'>复制地址</button><button class="mini" onclick='LvbanNav(${JSON.stringify(i.address||i.name||'')})'>导航</button><button class="mini" onclick='openItemEditor(${k})'>编辑</button><button class="mini danger" onclick='deleteItem(${k})'>删除</button></div>`}</div>`}).join(''):`<div class="empty glass">今天还没有详细日程<br><button class="mini primary" style="margin-top:10px" onclick="openDayEditor()">＋ 添加第一条</button></div>`}</div><div class="day-footer"><span class="budget">当天预算：¥${items.reduce((s,x)=>s+Number(x.budget||0),0)}</span><button class="mini primary" onclick="openDayEditor()">＋ 添加</button></div>`;
+    const detail=`<div class="card glass"><div class="crumb">${esc(d?.date||'')}</div><h3>${esc(d?.title||'待安排')}</h3><div class="sub">每天独立编辑 · 景点 / 美食 / 酒店 / 火车 / 航班 / 交通 / 备注</div></div><div class="timeline">${items.length?items.map((i,k)=>{i._index=k;return `<div class="it-card glass"><div class="it-time">${esc(i.time||'未定时间')} <span class="it-type">${esc(i.type||'日程')}</span></div><div class="it-title">${esc(i.name||'未命名日程')}</div><div class="it-address">📍 ${esc(i.address||'暂无地址')}</div>${i.budget?`<div class="data-meta">预算 ¥${i.budget}</div>`:''}<div class="actions"><button class="mini" onclick='LvbanCopy(${JSON.stringify(i.name||'')})'>复制名称</button><button class="mini" onclick='LvbanCopy(${JSON.stringify(i.address||'')})'>复制地址</button><button class="mini" onclick='LvbanNav(${JSON.stringify(i.address||i.name||'')})'>导航</button><button class="mini" onclick='openItemEditor(${k})'>编辑</button><button class="mini danger" onclick='deleteItem(${k})'>删除</button></div></div>`}).join(''):`<div class="empty glass">今天还没有详细日程<br><button class="mini primary" style="margin-top:10px" onclick="openDayEditor()">＋ 添加第一条</button></div>`}</div><div class="day-footer"><span class="budget">当天预算：¥${items.reduce((s,x)=>s+Number(x.budget||0),0)}</span><button class="mini primary" onclick="openDayEditor()">＋ 添加</button></div>`;
     box.innerHTML=scheme+planTabs+cityBlock+dateBlock+detail;
     box.querySelectorAll('[data-city]').forEach(b=>b.onclick=()=>{window.__lvTripCity=b.dataset.city;const idx=(p.days||[]).map((x,i)=>i).find(i=>map[i]===window.__lvTripCity);if(idx!=null)window.activeDay=idx;render()});
     box.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{window.activeDay=Number(b.dataset.day);render()});
     box.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{window.activePlan=b.dataset.plan;window.activeDay=0;window.__lvTripCity=null;render()});
   }
-  function install(){style();const old=window.renderTripDetail;if(window.__lvTripLayoutInstalled)return;if(typeof old!=='function')return setTimeout(install,100);window.__lvTripLayoutInstalled=true;window.renderTripDetail=render;render()}
+  function patchCreate(){
+    if(window.__lvTripCreateWrapped)return true;
+    if(typeof window.createTripFromForm!=='function')return false;
+    const base=window.createTripFromForm;
+    window.createTripFromForm=function(){
+      const alternate=!!document.getElementById('ntAlternate')?.checked;
+      const before=new Set((window.db?.trips||[]).map(x=>x.id));
+      const result=base.apply(this,arguments);
+      setTimeout(()=>{
+        const list=window.db?.trips||[];const t=list.find(x=>!before.has(x.id));
+        if(!t)return;
+        t.hasAlternateRoute=alternate;
+        if(!alternate&&Array.isArray(t.plans)&&t.plans.length>1)t.plans=t.plans.slice(0,1);
+        window.save?.();window.renderTrips?.();
+      },120);
+      return result;
+    };
+    window.__lvTripCreateWrapped=true;return true;
+  }
+  function install(){style();patchCreate();if(window.__lvTripLayoutInstalled)return;if(typeof window.renderTripDetail!=='function')return setTimeout(install,100);window.__lvTripLayoutInstalled=true;window.renderTripDetail=render;render()}
   function watch(){install();new MutationObserver(()=>setTimeout(install,30)).observe(document.body,{subtree:true,childList:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
