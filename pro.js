@@ -1,7 +1,7 @@
 /* 旅伴旅行管家 Pro · 正式交互修复层 */
 (function(){
   const D=window.LVBAN_DATA||{cities:['福州','平潭','泉州','厦门'],spots:[],foods:[]};
-  const safe=t=>String(t??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const safe=t=>String(t??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
   const copy=t=>{t=String(t||'');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('已复制')).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('已复制')})};
   const nav=t=>{t=String(t||'').trim();if(!t)return toast('暂无地址');window.open('https://www.amap.com/search?query='+encodeURIComponent(t),'_blank','noopener')};
   const toast=t=>{let x=document.getElementById('lv-toast');if(!x){x=document.createElement('div');x.id='lv-toast';x.style='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:100;padding:11px 16px;border-radius:16px;background:rgba(20,20,35,.9);color:#fff;font-size:13px;opacity:0;transition:.2s';document.body.appendChild(x)}x.textContent=t;x.style.opacity=1;clearTimeout(x._t);x._t=setTimeout(()=>x.style.opacity=0,1600)};
@@ -73,4 +73,12 @@
       card.appendChild(del);
     });
   };
+})();
+
+/* 最后加载：真正接管行程详情渲染，避免被上面的 Pro 渲染器覆盖。 */
+(function(){
+  const s=document.createElement('script');
+  s.src='itinerary-layout-final.js?v=20260813-2';
+  s.onload=()=>window.lvCityDateLayout?.render?.();
+  document.head.appendChild(s);
 })();
