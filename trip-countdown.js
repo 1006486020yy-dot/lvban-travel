@@ -43,4 +43,9 @@
   window.LvbanCountdown={render};
   const boot=()=>{render();setInterval(render,60000);};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else setTimeout(boot,0);
+
+  // 行程详情布局：倒计时脚本本来就在稳定版加载链里，这里顺序加载布局补丁，避免改动 storage.js。
+  const fix=document.createElement('script');
+  fix.src='trip-layout-fix.js?v=20260813-1';
+  document.head.appendChild(fix);
 })();
