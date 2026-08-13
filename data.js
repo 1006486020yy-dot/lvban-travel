@@ -55,4 +55,10 @@
   s.src = 'data/catalog-ui.js?v=20260813';
   s.defer = true;
   document.head.appendChild(s);
+
+  // 行程卡片点击兼容层：解决 ui-fixes 与最终行程渲染器的入口覆盖冲突。
+  const tripClickFix = document.createElement('script');
+  tripClickFix.src = 'trip-card-click-fix.js?v=20260813-1';
+  tripClickFix.defer = true;
+  document.head.appendChild(tripClickFix);
 })();
