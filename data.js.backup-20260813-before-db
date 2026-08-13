@@ -1,0 +1,2 @@
+/* backup marker: original data.js before database integration */
+window.LVBAN_DATA={cities:['福州','平潭','泉州','厦门'],spots:[],foods:[],hotels:[]};
