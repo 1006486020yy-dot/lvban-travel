@@ -38,5 +38,6 @@
  window.openPlanEditor=function(){const p=window.currentPlan();if(!p)return;document.getElementById('modalTitle').textContent='方案名称';document.getElementById('modalBody').innerHTML=`<div class="form"><label>方案名称</label><input id="pn" value="${p.name}"><button class="btn primary" onclick="currentPlan().name=document.getElementById('pn').value.trim()||currentPlan().name;save();closeModal();renderTripDetail()">保存</button></div>`;document.getElementById('modal').classList.add('show');};
  const home=document.getElementById('home');if(home){if(!document.getElementById('homeSpots')){const x=document.createElement('div');x.id='homeSpots';x.style.display='none';home.appendChild(x)}if(!document.getElementById('homeFoods')){const x=document.createElement('div');x.id='homeFoods';x.style.display='none';home.appendChild(x)}}
  const fix=document.createElement('script');fix.src='ui-fixes.js?v=20260810';document.head.appendChild(fix);
- const createHotfix=document.createElement('script');createHotfix.src='create-trip-hotfix.js?v=20260813-2';document.head.appendChild(createHotfix);
+ const tripCreateFix=document.createElement('script');tripCreateFix.src='create-trip-fix.js?v=20260813-1';document.head.appendChild(tripCreateFix);
+ const countdownFix=document.createElement('script');countdownFix.src='trip-countdown.js?v=20260813-1';document.head.appendChild(countdownFix);
 })();
