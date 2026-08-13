@@ -118,16 +118,14 @@
       if(!start||!end)return window.toast?.('请选择开始和结束日期')||alert('请选择开始和结束日期');
       if(end<start)return window.toast?.('结束日期不能早于开始日期')||alert('结束日期不能早于开始日期');
       if(!window._selectedCities.length)return window.toast?.('请选择至少一个目的地')||alert('请选择至少一个目的地');
-      /* 兼容现有创建逻辑：把多城市作为一个目的地字符串交给原创建函数。 */
       input.value=window._selectedCities.join(' · ');
-      const before=(window.db?.()?.trips||[]).map(t=>t.id);
+      const before=(window.db?.trips||[]).map(t=>t.id);
       if(typeof originalCreate==='function')originalCreate();else window.createTripFromForm?.();
       if(window._selectedCities.length>1){
-        const list=window.db?.()?.trips||[];const created=list.find(t=>!before.includes(t.id))||list[0];
+        const list=window.db?.trips||[];const created=list.find(t=>!before.includes(t.id))||list[0];
         if(created){created.city=window._selectedCities.join(' · ');window.save?.();durationPicker(created,window._selectedCities)}
       }
     };
-    /* 若原创建逻辑在当前版本是异步/覆盖，仍确保模式和目的地状态可读取。 */
   }
 
   function boot(){window.openNewTrip=openNewTrip}
