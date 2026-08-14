@@ -75,4 +75,10 @@
   tripDeleteFix.src = 'trip-delete-fix.js?v=20260814-1';
   tripDeleteFix.defer = true;
   document.head.appendChild(tripDeleteFix);
+
+  // 每日行程创建：保持当前城市 → 日期 → 当天详情结构，只增加“创建每日行程”入口。
+  const tripDayCreate = document.createElement('script');
+  tripDayCreate.src = 'trip-day-create.js?v=20260814-2';
+  tripDayCreate.defer = true;
+  document.head.appendChild(tripDayCreate);
 })();
