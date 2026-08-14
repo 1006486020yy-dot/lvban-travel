@@ -1,7 +1,7 @@
 /* 旅伴旅行管家 · 行程删除功能
-   1) 大行程列表：每张行程卡右上角增加“删除”入口
-   2) 每日行程详情：每条安排增加“删除”按钮
-   3) 删除后同步当前 db，并尽可能调用项目已有持久化方法；若没有，则更新包含 trips 的本地存储记录。
+   - 大行程：行程卡右上角显示“删除”
+   - 每日行程：每条安排的操作区显示“删除”
+   - 删除前确认，删除后同步本地数据并立即刷新当前页面
 */
 (function(){
   'use strict';
@@ -12,15 +12,23 @@
 
   function persist(){
     const fns=['saveDB','saveData','persistDB','persistData','saveState','saveLocalData'];
-    for(const n of fns){ if(typeof window[n]==='function'){ try{window[n]();return true;}catch(e){} } }
+    for(const n of fns){
+      if(typeof window[n]==='function'){
+        try{window[n]();return true;}catch(e){}
+      }
+    }
     try{
       for(let i=0;i<localStorage.length;i++){
         const key=localStorage.key(i); if(!key)continue;
         const raw=localStorage.getItem(key); if(!raw||raw.length>2000000)continue;
         try{
           const obj=JSON.parse(raw);
-          if(obj&&Array.isArray(obj.trips)){ obj.trips=trips(); localStorage.setItem(key,JSON.stringify(obj)); return true; }
-          if(Array.isArray(obj)&&obj.some(x=>x&&Array.isArray(x.plans))){ localStorage.setItem(key,JSON.stringify(trips())); return true; }
+          if(obj&&Array.isArray(obj.trips)){
+            obj.trips=trips(); localStorage.setItem(key,JSON.stringify(obj)); return true;
+          }
+          if(Array.isArray(obj)&&obj.some(x=>x&&Array.isArray(x.plans))){
+            localStorage.setItem(key,JSON.stringify(trips())); return true;
+          }
         }catch(e){}
       }
     }catch(e){}
@@ -28,55 +36,87 @@
   }
 
   function deleteTrip(id){
-    const t=trips().find(x=>x.id===id); if(!t)return;
+    const t=trips().find(x=>String(x.id)===String(id));
+    if(!t)return;
     if(!confirm(`确定删除行程“${t.name||'未命名行程'}”吗？\n删除后该行程及其中的每日安排都会被删除。`))return;
-    window.db.trips=trips().filter(x=>x.id!==id);
-    if(window.activeTrip===id) window.activeTrip=window.db.trips[0]?.id||null;
+    window.db.trips=trips().filter(x=>String(x.id)!==String(id));
+    if(String(window.activeTrip)===String(id)) window.activeTrip=window.db.trips[0]?.id||null;
     persist();
-    window.renderTrips?.();
+    if(typeof window.renderTrips==='function') window.renderTrips();
     toast('行程已删除');
   }
 
   function deleteItem(index){
-    const t=trips().find(x=>x.id===window.activeTrip)||trips()[0];
-    const p=t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0];
+    const t=trips().find(x=>String(x.id)===String(window.activeTrip))||trips()[0];
+    const p=t?.plans?.find(x=>String(x.id)===String(window.activePlan))||t?.plans?.[0];
     const d=p?.days?.[Number(window._lv2Day)];
-    if(!d||!d.items?.[index])return;
+    if(!d||!Array.isArray(d.items)||!d.items[index])return;
     const item=d.items[index];
     if(!confirm(`确定删除“${item.name||'这条安排'}”吗？`))return;
     d.items.splice(index,1);
     persist();
-    window._lvbanTripCanvasV2?.();
+    if(typeof window._lvbanTripCanvasV2==='function') window._lvbanTripCanvasV2();
     toast('每日行程已删除');
   }
 
+  function getTripId(card,index){
+    const direct=card.dataset.tripId||card.dataset.id;
+    if(direct)return direct;
+    const onclick=card.getAttribute('onclick')||card.querySelector('[onclick]')?.getAttribute('onclick')||'';
+    const m=onclick.match(/(?:openTripCanvas|__lvbanHardOpenTrip)\(['"]([^'"]+)['"]\)/);
+    if(m)return m[1];
+    return trips()[index]?.id||null;
+  }
+
+  function addStyle(){
+    if($('#lvban-delete-style'))return;
+    const style=document.createElement('style');
+    style.id='lvban-delete-style';
+    style.textContent=`
+      .lv-delete-trip{position:absolute;right:18px;top:18px;z-index:30;display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border:0;border-radius:999px;background:rgba(255,255,255,.82);color:#d9363e;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);backdrop-filter:blur(8px)}
+      .lv-delete-trip:hover{background:#fff;color:#b4232c}
+      .trip-card{position:relative}
+      .lv-delete-item{margin-left:8px;padding:7px 12px;border:0;border-radius:999px;background:#fff0f0;color:#d9363e;font-size:13px;font-weight:600;cursor:pointer}
+      .lv-delete-item:hover{background:#ffe3e3;color:#b4232c}
+    `;
+    document.head.appendChild(style);
+  }
+
   function injectTripDelete(){
-    $$('#tripCards .trip-card').forEach(card=>{
+    $$('#tripCards .trip-card,#trips .trip-card').forEach((card,index)=>{
       if(card.querySelector('.lv-delete-trip'))return;
-      const onclick=card.getAttribute('onclick')||'';
-      const m=onclick.match(/openTripCanvas\(['"]([^'"]+)['"]\)/);
-      const id=m?.[1]; if(!id)return;
-      const b=document.createElement('span');
-      b.className='lv-delete-trip'; b.textContent='删除'; b.title='删除行程'; b.dataset.tripId=id;
-      b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();deleteTrip(id);});
+      const id=getTripId(card,index); if(!id)return;
+      const b=document.createElement('button');
+      b.type='button'; b.className='lv-delete-trip'; b.textContent='删除'; b.title='删除行程'; b.dataset.tripId=id;
+      b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();deleteTrip(id);},true);
       card.appendChild(b);
     });
   }
 
   function injectItemDelete(){
     $$('.lv2-card').forEach((card,idx)=>{
-      if(card.querySelector('.lv-delete-item'))return;
-      const actions=card.querySelector('.lv2-actions'); if(!actions)return;
-      const b=document.createElement('button'); b.className='lv-delete-item'; b.textContent='删除'; b.dataset.deleteIndex=String(idx);
-      b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();deleteItem(Number(b.dataset.deleteIndex));});
+      const actions=card.querySelector('.lv2-actions');
+      if(!actions||actions.querySelector('.lv-delete-item'))return;
+      const b=document.createElement('button');
+      b.type='button'; b.className='lv-delete-item'; b.textContent='删除'; b.title='删除这条每日行程';
+      b.dataset.deleteIndex=String(idx);
+      b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();deleteItem(Number(b.dataset.deleteIndex));},true);
       actions.appendChild(b);
     });
   }
 
-  function inject(){injectTripDelete();injectItemDelete();}
-  const mo=new MutationObserver(()=>inject());
-  window.addEventListener('load',()=>{inject();mo.observe(document.body,{subtree:true,childList:true});});
-  setTimeout(()=>{inject();mo.observe(document.body,{subtree:true,childList:true});},500);
+  function inject(){addStyle();injectTripDelete();injectItemDelete();}
+  function start(){
+    inject();
+    if(!window.__lvbanDeleteObserver){
+      const mo=new MutationObserver(()=>inject());
+      mo.observe(document.body,{subtree:true,childList:true});
+      window.__lvbanDeleteObserver=mo;
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+  window.addEventListener('load',inject);
   window.__lvbanDeleteTrip=deleteTrip;
   window.__lvbanDeleteItem=deleteItem;
 })();
