@@ -9,25 +9,19 @@
   const uid=()=>window.uid?.()||('lv-'+Date.now()+'-'+Math.random().toString(36).slice(2));
   const date=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return isNaN(d)?null:d};
   const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
-
-  function style(){
-    if($('#lv-final-trip-style'))return;
-    const s=document.createElement('style');s.id='lv-final-trip-style';s.textContent=`
+  function style(){if($('#lv-final-trip-style'))return;const s=document.createElement('style');s.id='lv-final-trip-style';s.textContent=`
       .lv-trip-page{padding:10px 2px 100px}.lv-trip-tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin-bottom:16px}.lv-trip-tabs b{padding:10px 2px 13px;font-size:19px;position:relative}.lv-trip-tabs b:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--p);border-radius:3px}
       .lv-trip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.lv-trip-card{position:relative;overflow:visible!important;padding:0!important;border:1px solid #eeeafa!important;background:#fff!important;border-radius:24px!important;text-align:left!important;box-shadow:0 12px 30px #403a8a10!important;min-height:190px}.lv-trip-cover{height:120px;border-radius:24px 24px 0 0;padding:14px;display:flex;align-items:flex-end;justify-content:space-between;background:linear-gradient(135deg,#715ff6,#45b991);color:#fff}.lv-trip-cover span{font-size:14px;font-weight:800}.lv-trip-cover i{font-style:normal;background:#ffffff35;padding:5px 8px;border-radius:10px;font-size:11px}.lv-trip-body{padding:14px}.lv-trip-body h3{margin:0 0 6px;font-size:17px}.lv-trip-body p{margin:0;color:var(--muted);font-size:12px}.lv-trip-meta{display:flex;justify-content:space-between;margin-top:12px;color:#6958f5;font-size:11px}
       .lv-more-wrap{position:absolute;right:10px;top:10px;z-index:50}.lv-more-btn{width:38px!important;height:36px!important;padding:0!important;border-radius:12px!important;background:rgba(255,255,255,.95)!important;color:#4f4c61!important;font-size:22px!important;box-shadow:0 6px 18px rgba(40,30,90,.14)!important}.lv-more-menu{position:absolute;right:0;top:42px;width:150px;padding:6px;background:#fff;border:1px solid #eeeafa;border-radius:14px;box-shadow:0 16px 35px rgba(40,30,90,.18);display:none;z-index:100}.lv-more-menu.show{display:block}.lv-more-menu button{display:block;width:100%;padding:10px 11px;text-align:left;background:transparent;border-radius:10px;font-size:13px}.lv-more-menu .danger{color:#d94e5c}
       .lv-trip-fab{position:fixed;right:22px;bottom:88px;z-index:60;height:58px;min-width:142px;padding:0 18px;border-radius:20px;background:var(--p);color:#fff;box-shadow:0 14px 30px #6958f555;font-size:15px;font-weight:800}
-      .lv-detail{padding:5px 2px 100px}.lv-detail-top{display:flex;align-items:center;gap:10px;padding:8px 0 14px}.lv-back{width:42px;height:42px;border-radius:14px;background:#fff;font-size:27px}.lv-detail-title{flex:1}.lv-detail-title h2{margin:0;font-size:22px}.lv-detail-title p{margin:4px 0 0;color:var(--muted);font-size:11px}.lv-detail-actions{display:flex;gap:7px}.lv-detail-actions button{padding:9px 11px;border-radius:12px;background:#fff}.lv-detail-actions .danger{background:#fff0f1;color:#d94e5c}
-      .lv-plan-row{display:flex;gap:8px;margin-bottom:10px}.lv-plan{flex:1;padding:11px;border-radius:14px;background:#fff;color:#777;font-weight:800}.lv-plan.on{background:var(--p);color:#fff}.lv-filters{display:flex;gap:7px;overflow:auto;padding:3px 0 12px}.lv-filter{flex:0 0 auto;padding:8px 11px;border-radius:13px;background:#fff;color:#777;font-size:11px}.lv-filter.on{background:#efedff;color:var(--p);font-weight:800}
-      .lv-day{background:#ffffffd9;border:1px solid #fff;border-radius:20px;margin:10px 0;overflow:hidden}.lv-day-head{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 15px;background:transparent;text-align:left}.lv-day-head .date{color:var(--p);font-size:13px;font-weight:900}.lv-day-head .name{font-size:15px;font-weight:800;margin-left:10px}.lv-day-head .count{color:var(--muted);font-size:11px}.lv-day-body{padding:0 12px 13px}.lv-day-tools{display:flex;justify-content:flex-end;gap:7px;margin-bottom:8px}.lv-day-tools button{padding:8px 10px;border-radius:11px;background:#fff;font-size:11px}.lv-day-tools .danger{background:#fff0f1;color:#d94e5c}.lv-event{display:grid;grid-template-columns:55px 1fr;gap:8px;padding:8px 0}.lv-time{color:var(--p);font-size:12px;font-weight:900;padding-top:8px}.lv-event-card{background:#f7f7fb;border-radius:17px;padding:13px}.lv-event-top{display:flex;justify-content:space-between;align-items:center}.lv-type{background:#efedff;color:var(--p);padding:5px 8px;border-radius:9px;font-size:10px;font-weight:800}.lv-event-card h3{margin:8px 0 5px;font-size:16px}.lv-address,.lv-note{font-size:11px;color:var(--muted);line-height:1.55}.lv-event-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.lv-event-actions button{padding:8px 10px;border-radius:11px;background:#fff;color:#5d4de5;font-size:11px}.lv-event-actions .danger{color:#d94e5c}.lv-empty{text-align:center;padding:35px 15px;color:var(--muted)}
-      .lv-countdown-home{margin-top:14px;padding:14px 16px;border-radius:20px;background:#ffffff20;border:1px solid #ffffff40;color:#fff}.lv-countdown-home strong{display:block;font-size:30px}.lv-countdown-home small{display:block;margin-top:4px;font-size:11px}
       @media(max-width:760px){.lv-trip-grid{grid-template-columns:1fr}.lv-trip-fab{right:16px;bottom:86px}.lv-detail-actions .lv-delete-trip{padding:8px 9px}}
-    `;document.head.appendChild(s);
-  }
+    `;document.head.appendChild(s)}
 
   function normalize(){
     trips().forEach(t=>{
-      if(typeof t.hasAlternateRoutes!=='boolean')t.hasAlternateRoutes=Array.isArray(t.plans)&&t.plans.length>1;
+      /* 只有创建行程时明确勾选“备用路线”，才允许出现 A/B。
+         不能因为数据里恰好存在两个 plans 就自动打开 B。 */
+      if(typeof t.hasAlternateRoutes!=='boolean')t.hasAlternateRoutes=false;
       if(!Array.isArray(t.plans)||!t.plans.length)t.plans=[{id:'A',name:'方案 A',days:[]}];
       if(t.hasAlternateRoutes!==true)t.plans=t.plans.filter(p=>p.id==='A').slice(0,1);
       if(!t.plans.length)t.plans=[{id:'A',name:'方案 A',days:[]}];
@@ -36,93 +30,24 @@
     save();
   }
 
-  /* 首页只保留一个倒计时，并严格按“当前进行中 > 最近未来出发”选择。 */
-  function nearestTrip(){
-    const now=today();
-    const valid=trips().map(t=>({t,start:date(t.start),end:date(t.end||t.start)})).filter(x=>x.start);
-    const current=valid.filter(x=>x.end&&x.start<=now&&now<=x.end).sort((a,b)=>a.start-b.start)[0];
-    if(current)return current;
-    return valid.filter(x=>x.start>=now).sort((a,b)=>a.start-b.start)[0]||null;
-  }
-  function updateCountdown(){
-    const hero=$('#home .hero');if(!hero)return;
-    /* 清掉旧版本可能留下的所有倒计时，只创建一个。 */
-    $$('.trip-countdown,#lv-countdown,#lv-home-countdown,.lv-countdown').forEach(x=>{if(x.id!=='lv-home-countdown')x.remove()});
-    let box=$('#lv-home-countdown');if(!box){box=document.createElement('div');box.id='lv-home-countdown';box.className='lv-countdown-home';hero.appendChild(box)}
-    const n=nearestTrip();
-    if(!n){box.innerHTML='<strong>暂无旅行</strong><small>创建行程后，这里会自动关联最近一次出发。</small>';return}
-    const now=today();
-    if(n.start<=now&&n.end&&now<=n.end){box.innerHTML='<strong>旅行进行中</strong><small>当前行程：'+esc(n.t.name)+' · '+esc(n.t.start)+' 至 '+esc(n.t.end)+'</small>';return}
-    const days=Math.max(0,Math.ceil((n.start-now)/86400000));
-    box.innerHTML='<strong>还有 '+days+' 天</strong><small>最近一次行程：'+esc(n.t.name)+' · '+esc(n.t.start)+'</small>';
-  }
-
+  function nearestTrip(){const now=today();const valid=trips().map(t=>({t,start:date(t.start),end:date(t.end||t.start)})).filter(x=>x.start);const current=valid.filter(x=>x.end&&x.start<=now&&now<=x.end).sort((a,b)=>a.start-b.start)[0];if(current)return current;return valid.filter(x=>x.start>=now).sort((a,b)=>a.start-b.start)[0]||null}
+  function updateCountdown(){const hero=$('#home .hero');if(!hero)return;$$('.trip-countdown,#lv-countdown,#lv-home-countdown,.lv-countdown').forEach(x=>{if(x.id!=='lv-home-countdown')x.remove()});let box=$('#lv-home-countdown');if(!box){box=document.createElement('div');box.id='lv-home-countdown';box.className='lv-countdown-home';hero.appendChild(box)}const n=nearestTrip();if(!n){box.innerHTML='<strong>暂无旅行</strong><small>创建行程后，这里会自动关联最近一次出发。</small>';return}const now=today();if(n.start<=now&&n.end&&now<=n.end){box.innerHTML='<strong>旅行进行中</strong><small>当前行程：'+esc(n.t.name)+' · '+esc(n.t.start)+' 至 '+esc(n.t.end)+'</small>';return}const days=Math.max(0,Math.ceil((n.start-now)/86400000));box.innerHTML='<strong>还有 '+days+' 天</strong><small>最近一次行程：'+esc(n.t.name)+' · '+esc(n.t.start)+'</small>'}
   function closeMenus(){$$('.lv-more-menu.show').forEach(x=>x.classList.remove('show'))}
-  function deleteTrip(id){
-    const a=trips(),t=a.find(x=>x.id===id);if(!t)return;
-    if(!confirm('确定删除“'+(t.name||'这个行程')+'”吗？删除后不可恢复。'))return;
-    db().trips=a.filter(x=>x.id!==id);window.activeTrip=db().trips[0]?.id||null;window.activePlan=db().trips[0]?.plans?.[0]?.id||'A';window.activeDay=0;save();renderList();updateCountdown();toast('行程已删除');
-  }
-  function menu(id,btn){
-    closeMenus();const m=btn.parentElement.querySelector('.lv-more-menu');if(!m)return;m.classList.add('show');const t=trips().find(x=>x.id===id);if(!t)return;
-    m.querySelector('[data-act="copy"]').onclick=e=>{e.stopPropagation();navigator.clipboard?.writeText([t.name,t.city,t.start,t.end].filter(Boolean).join(' · '));toast('已复制行程信息');closeMenus()};
-    m.querySelector('[data-act="fav"]').onclick=e=>{e.stopPropagation();t.favorite=!t.favorite;save();toast(t.favorite?'已收藏':'已取消收藏');closeMenus()};
-    m.querySelector('[data-act="delete"]').onclick=e=>{e.stopPropagation();deleteTrip(id);closeMenus()};
-  }
-
-  function renderList(){
-    const page=$('#trips');if(!page)return;closeMenus();
-    page.innerHTML='<div class="lv-trip-page"><div class="lv-trip-tabs"><b>我的行程</b></div><div id="lvTripGrid" class="lv-trip-grid"></div><div id="lvTripEmpty" class="lv-empty" style="display:none">还没有行程，点击下方“＋ 新建行程”。</div><button id="lvTripFab" class="lv-trip-fab" type="button">＋ 新建行程</button></div>';
-    const grid=$('#lvTripGrid'),a=trips();$('#lvTripEmpty').style.display=a.length?'none':'block';
-    grid.innerHTML=a.map(t=>{const p=t.plans?.[0],days=p?.days||[],count=days.reduce((n,d)=>n+(d.items?.length||0),0);return '<div class="lv-trip-card" data-id="'+esc(t.id)+'"><button class="lv-trip-open" type="button" style="display:block;width:100%;padding:0;background:none;text-align:left"><div class="lv-trip-cover"><span>'+esc(t.city||'未设置目的地')+'</span><i>'+days.length+'天</i></div><div class="lv-trip-body"><h3>'+esc(t.name||'未命名行程')+'</h3><p>'+esc(t.start||'')+' '+(t.end?'— '+esc(t.end):'')+'</p><div class="lv-trip-meta"><span>'+(t.hasAlternateRoutes?'方案 A / 方案 B':'方案 A')+'</span><span>'+count+' 个安排</span></div></div></button><div class="lv-more-wrap"><button class="lv-more-btn" type="button" aria-label="更多操作">⋯</button><div class="lv-more-menu"><button data-act="copy">复制行程</button><button data-act="fav">'+(t.favorite?'取消收藏':'收藏行程')+'</button><button data-act="delete" class="danger">删除行程</button></div></div></div>'}).join('');
-    $$('.lv-trip-card').forEach(c=>{const id=c.dataset.id;c.querySelector('.lv-trip-open').onclick=()=>openCanvas(id);const b=c.querySelector('.lv-more-btn');b.onclick=e=>{e.stopPropagation();menu(id,b)}});
-    $('#lvTripFab').onclick=()=>window.openNewTrip?.();
-    /* 只隐藏旧版创建入口，保留当前这个唯一按钮。 */
-    $$('.float,.trip-fab').forEach(x=>x.remove());
-    updateCountdown();
-  }
-
+  function deleteTrip(id){const a=trips(),t=a.find(x=>x.id===id);if(!t)return;if(!confirm('确定删除“'+(t.name||'这个行程')+'”吗？删除后不可恢复。'))return;db().trips=a.filter(x=>x.id!==id);window.activeTrip=db().trips[0]?.id||null;window.activePlan=db().trips[0]?.plans?.[0]?.id||'A';window.activeDay=0;save();renderList();updateCountdown();toast('行程已删除')}
+  function menu(id,btn){closeMenus();const m=btn.parentElement.querySelector('.lv-more-menu');if(!m)return;m.classList.add('show');const t=trips().find(x=>x.id===id);if(!t)return;m.querySelector('[data-act="copy"]').onclick=e=>{e.stopPropagation();navigator.clipboard?.writeText([t.name,t.city,t.start,t.end].filter(Boolean).join(' · '));toast('已复制行程信息');closeMenus()};m.querySelector('[data-act="fav"]').onclick=e=>{e.stopPropagation();t.favorite=!t.favorite;save();toast(t.favorite?'已收藏':'已取消收藏');closeMenus()};m.querySelector('[data-act="delete"]').onclick=e=>{e.stopPropagation();deleteTrip(id);closeMenus()}}
+  function renderList(){const page=$('#trips');if(!page)return;closeMenus();page.innerHTML='<div class="lv-trip-page"><div class="lv-trip-tabs"><b>我的行程</b></div><div id="lvTripGrid" class="lv-trip-grid"></div><div id="lvTripEmpty" class="lv-empty" style="display:none">还没有行程，点击下方“＋ 新建行程”。</div><button id="lvTripFab" class="lv-trip-fab" type="button">＋ 新建行程</button></div>';const grid=$('#lvTripGrid'),a=trips();$('#lvTripEmpty').style.display=a.length?'none':'block';grid.innerHTML=a.map(t=>{const p=t.plans?.[0],days=p?.days||[],count=days.reduce((n,d)=>n+(d.items?.length||0),0);return '<div class="lv-trip-card" data-id="'+esc(t.id)+'"><button class="lv-trip-open" type="button" style="display:block;width:100%;padding:0;background:none;text-align:left"><div class="lv-trip-cover"><span>'+esc(t.city||'未设置目的地')+'</span><i>'+days.length+'天</i></div><div class="lv-trip-body"><h3>'+esc(t.name||'未命名行程')+'</h3><p>'+esc(t.start||'')+' '+(t.end?'— '+esc(t.end):'')+'</p><div class="lv-trip-meta"><span>'+(t.hasAlternateRoutes?'方案 A / 方案 B':'方案 A')+'</span><span>'+count+' 个安排</span></div></div></button><div class="lv-more-wrap"><button class="lv-more-btn" type="button" aria-label="更多操作">⋯</button><div class="lv-more-menu"><button data-act="copy">复制行程</button><button data-act="fav">'+(t.favorite?'取消收藏':'收藏行程')+'</button><button data-act="delete" class="danger">删除行程</button></div></div></div>'}).join('');$$('.lv-trip-card').forEach(c=>{const id=c.dataset.id;c.querySelector('.lv-trip-open').onclick=()=>openCanvas(id);const b=c.querySelector('.lv-more-btn');b.onclick=e=>{e.stopPropagation();menu(id,b)}});$('#lvTripFab').onclick=()=>window.openNewTrip?.();$$('.float,.trip-fab').forEach(x=>x.remove());updateCountdown()}
   function current(){return trips().find(t=>t.id===window.activeTrip)||trips()[0]}
   function plan(){const t=current();if(!t)return null;let p=t.plans?.find(p=>p.id===window.activePlan)||t.plans?.[0];window.activePlan=p?.id||'A';return p}
   function copyText(text){if(!text)return toast('暂无地址');navigator.clipboard?.writeText(text).then(()=>toast('地址已复制')).catch(()=>toast('地址：'+text))}
   function navText(name,address){if(!address)return toast('暂无地址');window.open('https://uri.amap.com/search?keyword='+encodeURIComponent((name||'')+' '+address),'_blank')}
-
-  function renderCanvas(){
-    const page=$('#trips'),t=current();if(!page||!t)return renderList();const p=plan();
-    page.innerHTML='<div class="lv-detail"><div class="lv-detail-top"><button class="lv-back" type="button" id="lvBack" aria-label="返回">‹</button><div class="lv-detail-title"><h2>'+esc(t.name)+'</h2><p>'+esc(t.city||'')+' · '+esc(t.start||'')+' → '+esc(t.end||'')+'</p></div><div class="lv-detail-actions"><button class="lv-delete-trip danger" type="button">删除行程</button></div></div>'+(t.hasAlternateRoutes?'<div class="lv-plan-row">'+t.plans.map(x=>'<button class="lv-plan '+(x.id===p.id?'on':'')+'" data-plan="'+esc(x.id)+'">'+esc(x.name)+'</button>').join('')+'</div>':'')+'<div class="lv-filters"><button class="lv-filter on" data-f="all">全部</button><button class="lv-filter" data-f="景点">景点</button><button class="lv-filter" data-f="美食">美食</button><button class="lv-filter" data-f="交通">交通</button><button class="lv-filter" data-f="酒店">酒店</button></div><div id="lvDays"></div></div>';
-    $('#lvBack').onclick=()=>{window.activeDay=0;renderList()};$('.lv-delete-trip').onclick=()=>deleteTrip(t.id);
-    $$('.lv-plan').forEach(b=>b.onclick=()=>{window.activePlan=b.dataset.plan;window.activeDay=0;renderCanvas()});
-    $$('.lv-filter').forEach(b=>b.onclick=()=>{$$('.lv-filter').forEach(x=>x.classList.toggle('on',x===b));renderDays(b.dataset.f)});
-    renderDays('all');
-  }
-
-  function renderDays(filter){
-    const p=plan(),box=$('#lvDays');if(!p||!box)return;const days=p.days||[];if(!days.length){box.innerHTML='<div class="lv-empty">暂无日期。</div>';return}
-    box.innerHTML=days.map((d,i)=>{const items=(d.items||[]).filter(x=>filter==='all'||x.type===filter);return '<section class="lv-day"><button class="lv-day-head" type="button" data-day="'+i+'"><span><span class="date">'+esc(d.date||'')+'</span><span class="name">'+esc(d.title||'DAY '+(i+1))+'</span></span><span class="count">'+items.length+' 项</span></button><div class="lv-day-body"><div class="lv-day-tools"><button class="danger lv-del-day" data-day="'+i+'">删除当天</button><button class="lv-add-day" data-day="'+i+'">＋ 添加日程</button></div>'+(items.length?items.map(x=>eventHtml(x,i)).join(''):'<div class="lv-empty">这一天还没有安排</div>')+'</div></section>'}).join('');
-    $$('.lv-day-head').forEach(b=>b.onclick=()=>{const body=b.parentElement.querySelector('.lv-day-body');body.style.display=body.style.display==='block'?'none':'block';window.activeDay=Number(b.dataset.day)});
-    $$('.lv-day').forEach((s,i)=>{if(i===Number(window.activeDay||0))s.querySelector('.lv-day-body').style.display='block'});
-    $$('.lv-del-day').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteDay(Number(b.dataset.day))});
-    $$('.lv-add-day').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);window.openDayEditor?.()});
-    $$('.lv-edit-event').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);window.openItemEditor?.(Number(b.dataset.i))});
-    $$('.lv-del-event').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);deleteEvent(Number(b.dataset.i))});
-    $$('.lv-copy-address').forEach(b=>b.onclick=e=>{e.stopPropagation();copyText(decodeURIComponent(b.dataset.address||''))});
-    $$('.lv-nav-event').forEach(b=>b.onclick=e=>{e.stopPropagation();navText(decodeURIComponent(b.dataset.name||''),decodeURIComponent(b.dataset.address||''))});
-  }
-
+  function renderCanvas(){const page=$('#trips'),t=current();if(!page||!t)return renderList();const p=plan();page.innerHTML='<div class="lv-detail"><div class="lv-detail-top"><button class="lv-back" type="button" id="lvBack" aria-label="返回">‹</button><div class="lv-detail-title"><h2>'+esc(t.name)+'</h2><p>'+esc(t.city||'')+' · '+esc(t.start||'')+' → '+esc(t.end||'')+'</p></div><div class="lv-detail-actions"><button class="lv-delete-trip danger" type="button">删除行程</button></div></div>'+(t.hasAlternateRoutes?'<div class="lv-plan-row">'+t.plans.map(x=>'<button class="lv-plan '+(x.id===p.id?'on':'')+'" data-plan="'+esc(x.id)+'">'+esc(x.name)+'</button>').join('')+'</div>':'')+'<div class="lv-filters"><button class="lv-filter on" data-f="all">全部</button><button class="lv-filter" data-f="景点">景点</button><button class="lv-filter" data-f="美食">美食</button><button class="lv-filter" data-f="交通">交通</button><button class="lv-filter" data-f="酒店">酒店</button></div><div id="lvDays"></div></div>';$('#lvBack').onclick=()=>{window.activeDay=0;renderList()};$('.lv-delete-trip').onclick=()=>deleteTrip(t.id);$$('.lv-plan').forEach(b=>b.onclick=()=>{window.activePlan=b.dataset.plan;window.activeDay=0;renderCanvas()});$$('.lv-filter').forEach(b=>b.onclick=()=>{$$('.lv-filter').forEach(x=>x.classList.toggle('on',x===b));renderDays(b.dataset.f)});renderDays('all')}
+  function renderDays(filter){const p=plan(),box=$('#lvDays');if(!p||!box)return;const days=p.days||[];if(!days.length){box.innerHTML='<div class="lv-empty">暂无日期。</div>';return}box.innerHTML=days.map((d,i)=>{const items=(d.items||[]).filter(x=>filter==='all'||x.type===filter);return '<section class="lv-day"><button class="lv-day-head" type="button" data-day="'+i+'"><span><span class="date">'+esc(d.date||'')+'</span><span class="name">'+esc(d.title||'DAY '+(i+1))+'</span></span><span class="count">'+items.length+' 项</span></button><div class="lv-day-body"><div class="lv-day-tools"><button class="danger lv-del-day" data-day="'+i+'">删除当天</button><button class="lv-add-day" data-day="'+i+'">＋ 添加日程</button></div>'+(items.length?items.map(x=>eventHtml(x,i)).join(''):'<div class="lv-empty">这一天还没有安排</div>')+'</div></section>'}).join('');$$('.lv-day-head').forEach(b=>b.onclick=()=>{const body=b.parentElement.querySelector('.lv-day-body');body.style.display=body.style.display==='block'?'none':'block';window.activeDay=Number(b.dataset.day)});$$('.lv-day').forEach((s,i)=>{if(i===Number(window.activeDay||0))s.querySelector('.lv-day-body').style.display='block'});$$('.lv-del-day').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteDay(Number(b.dataset.day))});$$('.lv-add-day').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);window.openDayEditor?.()});$$('.lv-edit-event').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);window.openItemEditor?.(Number(b.dataset.i))});$$('.lv-del-event').forEach(b=>b.onclick=e=>{e.stopPropagation();window.activeDay=Number(b.dataset.day);deleteEvent(Number(b.dataset.i))});$$('.lv-copy-address').forEach(b=>b.onclick=e=>{e.stopPropagation();copyText(decodeURIComponent(b.dataset.address||''))});$$('.lv-nav-event').forEach(b=>b.onclick=e=>{e.stopPropagation();navText(decodeURIComponent(b.dataset.name||''),decodeURIComponent(b.dataset.address||''))})}
   function eventHtml(x,dayIndex){const d=plan().days[dayIndex]||{},real=d.items?.findIndex(y=>y.id===x.id);const idx=real>=0?real:0;const addr=x.address||'';return '<article class="lv-event"><div class="lv-time">'+esc(x.time||'')+'</div><div class="lv-event-card"><div class="lv-event-top"><span class="lv-type">'+esc(x.type||'行程')+'</span></div><h3>'+esc(x.name||'未命名')+'</h3>'+(addr?'<div class="lv-address">📍 '+esc(addr)+'</div>':'')+(x.note?'<div class="lv-note">'+esc(x.note)+'</div>':'')+'<div class="lv-event-actions">'+(addr?'<button class="lv-copy-address" data-address="'+encodeURIComponent(addr)+'">复制地址</button><button class="lv-nav-event" data-name="'+encodeURIComponent(x.name||'')+'" data-address="'+encodeURIComponent(addr)+'">导航</button>':'')+'<button class="lv-edit-event" data-day="'+dayIndex+'" data-i="'+idx+'">编辑</button><button class="lv-del-event danger" data-day="'+dayIndex+'" data-i="'+idx+'">删除</button></div></div></article>'}
-
   function deleteDay(i){const p=plan();if(!p?.days?.[i])return;if(p.days.length<=1)return alert('至少保留一天行程；如果不需要这趟旅行，请删除整个行程。');if(!confirm('确定删除 '+p.days[i].date+' 这一天及当天全部日程？'))return;p.days.splice(i,1);window.activeDay=Math.max(0,Math.min(i,p.days.length-1));save();renderCanvas();updateCountdown()}
   function deleteEvent(i){const p=plan(),d=p?.days?.[window.activeDay];if(!d?.items?.[i])return;if(!confirm('确定删除这条详细日程？'))return;d.items.splice(i,1);save();renderCanvas()}
   function openCanvas(id){window.activeTrip=id;const t=current();window.activePlan=t?.plans?.[0]?.id||'A';window.activeDay=0;renderCanvas()}
-
   window.openTripCanvas=openCanvas;window.renderTrips=renderList;window.renderTripDetail=renderCanvas;window.selectTrip=id=>openCanvas(id);window.switchPlan=id=>{window.activePlan=id;renderCanvas()};window.lvDeleteDay=deleteDay;window.lvDeleteEvent=deleteEvent;
-
-  function cleanLegacy(){
-    $$('#trips .trip-tab[data-tab="discover"],#trips .tabs .tab').forEach(x=>{if((x.textContent||'').trim()==='发现灵感')x.remove()});
-    $$('.toolbox-entry,.toolbox-grid').forEach(x=>x.remove());
-    $$('.trip-countdown').forEach(x=>x.remove());
-    $$('.float,.trip-fab').forEach(x=>x.remove());
-  }
+  function cleanLegacy(){$$('#trips .trip-tab[data-tab="discover"],#trips .tabs .tab').forEach(x=>{if((x.textContent||'').trim()==='发现灵感')x.remove()});$$('.toolbox-entry,.toolbox-grid').forEach(x=>x.remove());$$('.trip-countdown').forEach(x=>x.remove());$$('.float,.trip-fab').forEach(x=>x.remove())}
   function install(){style();normalize();cleanLegacy();window.renderTrips=renderList;window.renderTripDetail=renderCanvas;setTimeout(()=>{cleanLegacy();renderList()},150);setTimeout(()=>{cleanLegacy();renderList()},600);setTimeout(()=>{cleanLegacy();renderList()},1200)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
   window.lvFinalTripFix={renderList,renderCanvas,updateCountdown};
