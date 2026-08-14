@@ -70,4 +70,10 @@
   tripLayoutV2.src = 'trip-layout-v2.js?v=20260814-2';
   tripLayoutV2.defer = true;
   document.head.appendChild(tripLayoutV2);
+
+  // 每日行程创建入口：在当天详情中提供“＋ 创建每日行程”。
+  const tripDayCreate = document.createElement('script');
+  tripDayCreate.src = 'trip-day-create.js?v=20260814-1';
+  tripDayCreate.defer = true;
+  document.head.appendChild(tripDayCreate);
 })();
