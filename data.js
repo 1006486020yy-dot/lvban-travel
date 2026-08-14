@@ -65,15 +65,14 @@
   hardTripFix.defer = true;
   document.head.appendChild(hardTripFix);
 
-  // 行程详情 V2：城市 → 属于该城市的日期 → 当天行程详情。
   const tripLayoutV2 = document.createElement('script');
   tripLayoutV2.src = 'trip-layout-v2.js?v=20260814-2';
   tripLayoutV2.defer = true;
   document.head.appendChild(tripLayoutV2);
 
-  // 每日行程创建入口：在当天详情中提供“＋ 创建每日行程”。
-  const tripDayCreate = document.createElement('script');
-  tripDayCreate.src = 'trip-day-create.js?v=20260814-1';
-  tripDayCreate.defer = true;
-  document.head.appendChild(tripDayCreate);
+  // 删除功能：大行程 + 每日行程细节。
+  const tripDeleteFix = document.createElement('script');
+  tripDeleteFix.src = 'trip-delete-fix.js?v=20260814-1';
+  tripDeleteFix.defer = true;
+  document.head.appendChild(tripDeleteFix);
 })();
