@@ -85,4 +85,17 @@
   function start(){inject();if(!window.__lvbanDeleteObserver){const mo=new MutationObserver(()=>inject());mo.observe(document.body,{subtree:true,childList:true});window.__lvbanDeleteObserver=mo}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
   window.addEventListener('load',inject);window.__lvbanDeleteTrip=deleteTrip;window.__lvbanDeleteItem=deleteItem;
+
+  // 首页“旅伴 AI”卡片仅修改副标题文字，不触碰任何行程结构或组件。
+  function patchHomeAISubtitle(){
+    const cards=$$('#home .tile');
+    cards.forEach(card=>{
+      const title=card.querySelector('b');
+      const sub=card.querySelector('.muted');
+      if(title&&sub&&title.textContent.trim()==='旅伴 AI') sub.textContent='你的专属旅行规划助手';
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',patchHomeAISubtitle,{once:true});
+  else patchHomeAISubtitle();
+  window.addEventListener('load',patchHomeAISubtitle);
 })();
