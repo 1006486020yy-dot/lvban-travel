@@ -41,4 +41,32 @@
   window.deleteTrip=function(id){const t=(db.trips||[]).find(x=>x.id===id);if(!t)return;if((db.trips||[]).length<=1){toast('至少保留一个行程');return;}if(!confirm('确定删除「'+(t.name||'这个行程')+'」吗？删除后不可恢复。'))return;db.trips=db.trips.filter(x=>x.id!==id);activeTrip=db.trips[0]?.id||null;const first=db.trips[0];activePlan=first?.plans?.[0]?.id||null;activeDay=0;save();baseRenderTrips();toast('行程已删除');};
   window.renderTrips=function(){baseRenderTrips();const list=document.getElementById('tripList');if(!list)return;const bar=document.createElement('div');bar.className='trip-list-actions';bar.style='display:flex;justify-content:flex-end;gap:8px;margin:0 0 12px;position:sticky;top:66px;z-index:10';bar.innerHTML='<button class="mini primary" style="padding:11px 16px;border-radius:14px;box-shadow:0 8px 20px rgba(105,88,245,.18)" onclick="openNewTrip()">＋ 新建行程</button>';list.parentNode.insertBefore(bar,list);list.querySelectorAll('.trip-card').forEach((card,index)=>{if(index >= (db.trips||[]).length)return;const t=db.trips[index];card.style.position='relative';card.style.paddingRight='72px';const del=document.createElement('button');del.className='mini danger trip-delete';del.textContent='删除';del.style='position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:7px 9px;border-radius:10px;z-index:3';del.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();deleteTrip(t.id)};card.appendChild(del);});};
 })();
+(function(){
+  const css=`
+    #ai .title .muted,#ai .title .trip-level{display:none!important}
+    #ai .ai-ui-locked{background:linear-gradient(180deg,#faf9ff,#f5f7ff);border:2px solid #e4defd;border-radius:26px;padding:14px;box-shadow:0 12px 30px rgba(64,58,138,.06)}
+    #ai .ai-ui-locked .messages{gap:14px;min-height:55vh}
+    #ai .ai-ui-locked .msg{max-width:84%;padding:13px 16px;border-radius:18px;line-height:1.65;box-shadow:0 3px 12px rgba(64,58,138,.05)}
+    #ai .ai-ui-locked .msg.ai{align-self:flex-start;background:#fff;border:1px solid #ded9f5;color:#29283a}
+    #ai .ai-ui-locked .msg.user{align-self:flex-end;background:#6958f5;color:#fff;border:1px solid #5d4de5}
+    #ai .ai-ui-locked .composer{background:#fff;border:1px solid #e4defd;box-shadow:0 5px 18px rgba(64,58,138,.06)}
+    #ai .ai-ui-locked .composer textarea{background:transparent}
+    #ai .ai-ui-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    #ai .ai-ui-icon{width:42px;height:42px;border-radius:14px;background:#efedff;display:grid;place-items:center;color:#6958f5;font-size:21px}
+    #ai .ai-ui-sub{font-size:12px;color:#77788b;margin-top:4px}
+  `;
+  const apply=()=>{
+    const page=document.getElementById('ai');if(!page)return;
+    if(!document.getElementById('ai-ui-style')){const st=document.createElement('style');st.id='ai-ui-style';st.textContent=css;document.head.appendChild(st)}
+    const oldPanel=page.querySelector('.panel.chat');if(!oldPanel||oldPanel.dataset.aiLocked==='1')return;
+    const title=page.querySelector('.title');
+    if(title){title.innerHTML='<div class="ai-ui-title"><div class="ai-ui-icon">✦</div><div><h2 style="margin:0">旅伴 AI</h2><div class="ai-ui-sub">你的专属旅行规划助手</div></div></div>'}
+    oldPanel.dataset.aiLocked='1';oldPanel.classList.add('ai-ui-locked');
+    const messages=oldPanel.querySelector('#messages');if(messages){messages.querySelectorAll('.msg').forEach(m=>{m.classList.toggle('ai',!m.classList.contains('user'));});}
+  };
+  const boot=()=>apply();
+  document.addEventListener('DOMContentLoaded',boot);
+  const obs=new MutationObserver(apply);obs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(apply,300);setTimeout(apply,1000);
+})();
 (function(){const s=document.createElement('script');s.src='itinerary-layout-final.js?v=20260813-4';s.onload=()=>window.lvCityDateLayout?.render?.();document.head.appendChild(s);})();
