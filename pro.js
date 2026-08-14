@@ -69,4 +69,4 @@
   const obs=new MutationObserver(apply);obs.observe(document.body,{childList:true,subtree:true});
   setTimeout(apply,300);setTimeout(apply,1000);
 })();
-(function(){const s=document.createElement('script');s.src='itinerary-layout-final.js?v=20260813-4';s.onload=()=>window.lvCityDateLayout?.render?.();document.head.appendChild(s);})();
+(function(){const s=document.createElement('script');s.src='itinerary-layout-final.js?v=20260814-share1';s.onload=()=>window.lvCityDateLayout?.render?.();document.head.appendChild(s);})();
