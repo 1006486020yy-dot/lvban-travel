@@ -1,139 +1,43 @@
-/* 旅伴｜景点 / 美食 / 酒店增强目录层
- * 只接管三个内容库页面：搜索 + 简洁城市筛选 + 完整数据。
- * 不触碰行程、方案 A/B、AI、交通逻辑。
- */
+/* 旅伴｜景点 / 美食 / 酒店增强目录层 */
 (function () {
   'use strict';
-
-  const state = {
-    spotCity: '全部',
-    foodCity: '全部',
-    hotelCity: '全部',
-    spotQuery: '',
-    foodQuery: '',
-    hotelQuery: ''
-  };
-
-  const esc = (v) => String(v ?? '')
-    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
-
-  const val = (obj, ...keys) => {
-    for (const k of keys) if (obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim()) return obj[k];
-    return '';
-  };
-
-  function cities(items) {
-    return ['全部', ...Array.from(new Set(items.map(x => val(x, 'city')).filter(Boolean)))];
+  const state = {spotCity:'',foodCity:'',hotelCity:'',spotQuery:'',foodQuery:'',hotelQuery:''};
+  const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  const val=(o,...keys)=>{for(const k of keys)if(o&&o[k]!=null&&String(o[k]).trim())return o[k];return ''};
+  const citySet=items=>Array.from(new Set(items.map(x=>val(x,'city')).filter(Boolean)));
+  function actionButtons(item){
+    const name=val(item,'name'),address=val(item,'address');
+    return `<div class="actions"><button class="btn" onclick="copy('${esc(name)}')">复制名称</button><button class="btn" onclick="copy('${esc(address)}')">复制地址</button><button class="btn" onclick="nav('${esc(name)}','${esc(address)}')">导航</button><button class="btn primary" onclick='addFromCatalog(${JSON.stringify({name,address,city:val(item,'city'),type:'景点',note:val(item,'note','highlight')}).replaceAll("'","&#39;")})'>加入行程</button></div>`;
   }
-
-  function actionButtons(item) {
-    const name = val(item, 'name');
-    const address = val(item, 'address');
-    const safeName = esc(name).replaceAll('\\', '\\\\').replaceAll("'", "\\'");
-    const safeAddr = esc(address).replaceAll('\\', '\\\\').replaceAll("'", "\\'");
-    return `<div class="actions">
-      <button class="btn" onclick="copy('${safeName}')">复制名称</button>
-      <button class="btn" onclick="copy('${safeAddr}')">复制地址</button>
-      <button class="btn" onclick="nav('${safeName}','${safeAddr}')">导航</button>
-      <button class="btn primary" onclick="addFromCatalog('${safeName}','${safeAddr}')">加入行程</button>
-    </div>`;
+  function toolbar(target,type){
+    const q=state[type+'Query'];
+    return `<div class="catalog-toolbar"><div class="catalog-search-wrap"><span class="catalog-search-icon">⌕</span><input class="catalog-search" id="${target}Search" value="${esc(q)}" placeholder="搜索${type==='spot'?'景点名称、地址或关键词':type==='food'?'美食店铺、菜品或地址':'酒店名称、地址或关键词'}" oninput="LVBAN_CATALOG.setQuery('${type}',this.value)"><button class="catalog-clear" onclick="LVBAN_CATALOG.setQuery('${type}','')">×</button></div></div><div class="catalog-recommend-row"><span class="catalog-recommend-title">推荐城市</span>${['福州','厦门','平潭','北京','上海','杭州','重庆'].map(c=>`<button class="city-chip" data-city="${esc(c)}" onclick="LVBAN_CATALOG.setCity('${type}','${esc(c)}')">${esc(c)}</button>`).join('')}</div>`;
   }
-
-  function toolbar(target, type, items) {
-    const q = state[type + 'Query'];
-    const city = state[type + 'City'];
-    const cs = cities(items);
-    const cityOptions = cs.map(c => `<option value="${esc(c)}" ${c === city ? 'selected' : ''}>${esc(c)}</option>`).join('');
-    return `<div class="catalog-tools">
-      <input class="catalog-search" id="${target}Search" value="${esc(q)}" placeholder="搜索${type === 'spot' ? '景点' : type === 'food' ? '美食店铺' : '酒店'}名称、地址、关键词…" oninput="LVBAN_CATALOG.setQuery('${type}',this.value)">
-      <select class="catalog-city" onchange="LVBAN_CATALOG.setCity('${type}',this.value)">${cityOptions}</select>
-    </div>`;
+  function card(item,type){
+    const city=val(item,'city'),name=val(item,'name'),address=val(item,'address');
+    const extra=type==='spot'?[val(item,'type'),val(item,'highlight'),val(item,'recommendedTime'),val(item,'ticket'),val(item,'openTime')].filter(Boolean):type==='food'?[val(item,'type'),val(item,'recommended','dishes'),val(item,'price')].filter(Boolean):[val(item,'rating'),val(item,'price'),val(item,'tags')].filter(Boolean);
+    return `<article class="data card catalog-card"><div class="city">${esc(city)}</div><h3>${esc(name)}</h3><div class="addr">📍 ${esc(address||'暂无详细地址')}</div>${extra.length?`<div class="catalog-extra">${extra.map(x=>`<span>${esc(x)}</span>`).join(' · ')}</div>`:''}${actionButtons({...item,type})}</article>`;
   }
-
-  function card(item, type) {
-    const city = val(item, 'city');
-    const name = val(item, 'name');
-    const address = val(item, 'address');
-    const extra = type === 'spot'
-      ? [val(item, 'type'), val(item, 'highlight'), val(item, 'recommendedTime'), val(item, 'ticket'), val(item, 'openTime')].filter(Boolean)
-      : type === 'food'
-        ? [val(item, 'type'), val(item, 'recommended', 'dishes'), val(item, 'price')].filter(Boolean)
-        : [val(item, 'rating'), val(item, 'price'), val(item, 'tags')].filter(Boolean);
-    return `<article class="data card catalog-card">
-      <div class="city">${esc(city)}</div>
-      <h3>${esc(name)}</h3>
-      <div class="addr">📍 ${esc(address || '暂无详细地址')}</div>
-      ${extra.length ? `<div class="catalog-extra">${extra.map(x => `<span>${esc(x)}</span>`).join(' · ')}</div>` : ''}
-      ${actionButtons(item)}
-    </article>`;
+  function filter(items,type){const city=state[type+'City'],query=state[type+'Query'].trim().toLowerCase();return items.filter(item=>{if(city&&val(item,'city')!==city)return false;if(!query)return true;return [val(item,'name'),val(item,'city'),val(item,'address'),val(item,'type'),val(item,'highlight'),val(item,'recommended','dishes'),val(item,'tags')].join(' ').toLowerCase().includes(query)})}
+  function installStyles(){if(document.getElementById('lvbanCatalogStyles'))return;const s=document.createElement('style');s.id='lvbanCatalogStyles';s.textContent=`
+    .catalog-toolbar{margin:12px 0 10px}.catalog-search-wrap{position:relative;display:flex;align-items:center;background:rgba(255,255,255,.9);border:1px solid #e7e3f4;border-radius:18px;box-shadow:0 6px 22px rgba(70,55,140,.06);min-height:52px}.catalog-search-icon{font-size:24px;color:#777;margin-left:16px;line-height:1}.catalog-search{flex:1;border:0!important;box-shadow:none!important;background:transparent!important;outline:0;padding:14px 10px;font-size:15px;color:var(--text)}.catalog-clear{width:34px;height:34px;margin-right:8px;border:0;border-radius:50%;background:#f0eff8;color:#777;font-size:20px;cursor:pointer}.catalog-recommend-row{display:flex;align-items:center;gap:8px;overflow:auto;padding:3px 0 14px;scrollbar-width:none}.catalog-recommend-row::-webkit-scrollbar{display:none}.catalog-recommend-title{font-weight:900;color:#555;white-space:nowrap;margin-right:2px}.city-chip{border:1px solid #e7e3f4;background:#fff;padding:8px 14px;border-radius:999px;color:#666;white-space:nowrap;cursor:pointer}.city-chip.on,.city-chip:hover{background:#6958f5;color:#fff;border-color:#6958f5}.catalog-card{margin:10px 0}.catalog-extra{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.6}.catalog-count{margin:0 2px 10px;color:var(--muted);font-size:12px}
+    .lv-add-mask{position:fixed;inset:0;z-index:300;background:#17172a66;display:flex;align-items:flex-end}.lv-add-sheet{width:100%;max-height:82vh;overflow:auto;background:#f8f8fc;border-radius:28px 28px 0 0;padding:20px;box-sizing:border-box}.lv-add-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.lv-add-head b{font-size:19px}.lv-add-close{border:1px solid #e6e3f0;background:#fff;border-radius:12px;padding:8px 12px}.lv-add-label{font-size:12px;color:#777;margin:12px 0 7px}.lv-add-select{width:100%;padding:13px;border:1px solid #e6e3f0;border-radius:14px;background:#fff;font-size:14px}.lv-add-confirm{width:100%;margin-top:16px;padding:13px;border:0;border-radius:15px;background:#6958f5;color:#fff;font-weight:900;font-size:15px}
+    @media(max-width:760px){.catalog-search{font-size:14px}}
+  `;document.head.appendChild(s)}
+  function ensureTool(target,type){const host=document.getElementById(target);if(!host)return;if(!host.previousElementSibling?.classList.contains('catalog-toolbar'))host.insertAdjacentHTML('beforebegin',toolbar(target,type))}
+  function render(type){const data=window.LVBAN_DATA||{},key=type==='spot'?'spots':type==='food'?'foods':'hotels',target=type==='spot'?'spotList':type==='food'?'foodList':'hotelList',items=Array.isArray(data[key])?data[key]:[];ensureTool(target,type);const result=filter(items,type),host=document.getElementById(target);if(!host)return;host.innerHTML=`<div class="catalog-count">共 ${result.length} 条${type==='spot'?'景点':type==='food'?'美食':'酒店'}</div>`+(result.length?result.map(x=>card(x,type)).join(''):`<div class="empty">没有找到匹配内容，换个关键词试试</div>`);const city=state[type+'City'];host.previousElementSibling?.querySelectorAll('.city-chip').forEach(b=>b.classList.toggle('on',b.dataset.city===city))}
+  function addFromCatalog(item){
+    const trips=Array.isArray(window.db?.trips)?window.db.trips:[];
+    if(!trips.length){alert('目前还没有可加入的行程，请先创建大行程');return}
+    const mask=document.createElement('div');mask.className='lv-add-mask';mask.innerHTML=`<div class="lv-add-sheet"><div class="lv-add-head"><b>加入行程</b><button class="lv-add-close">关闭</button></div><div style="background:#fff;border-radius:15px;padding:12px;margin-bottom:8px"><b>${esc(item.name)}</b><div style="font-size:12px;color:#888;margin-top:4px">${esc(item.city||'')}</div></div><div class="lv-add-label">选择大行程</div><select id="lvAddTrip" class="lv-add-select"></select><div class="lv-add-label">选择方案</div><select id="lvAddPlan" class="lv-add-select"></select><div class="lv-add-label">选择哪一天</div><select id="lvAddDay" class="lv-add-select"></select><button class="lv-add-confirm">加入当天行程</button></div>`;document.body.appendChild(mask);
+    const tripSel=mask.querySelector('#lvAddTrip'),planSel=mask.querySelector('#lvAddPlan'),daySel=mask.querySelector('#lvAddDay');
+    tripSel.innerHTML=trips.map((t,i)=>`<option value="${esc(t.id)}">${esc(t.name||('行程 '+(i+1)))}</option>`).join('');
+    function refresh(){const t=trips.find(x=>String(x.id)===String(tripSel.value))||trips[0],plans=Array.isArray(t.plans)?t.plans:[];planSel.innerHTML=plans.map((p,i)=>`<option value="${esc(p.id)}">${esc(p.name||('方案 '+(i+1)))}</option>`).join('');const p=plans[0];daySel.innerHTML=(p?.days||[]).map((d,i)=>`<option value="${i}">${esc(d.title||d.label||('DAY '+(i+1)))} · ${esc(d.date||'')}</option>`).join('');}
+    tripSel.onchange=refresh;planSel.onchange=()=>{const t=trips.find(x=>String(x.id)===String(tripSel.value)),p=t?.plans?.find(x=>String(x.id)===String(planSel.value));daySel.innerHTML=(p?.days||[]).map((d,i)=>`<option value="${i}">${esc(d.title||d.label||('DAY '+(i+1)))} · ${esc(d.date||'')}</option>`).join('')};refresh();
+    mask.querySelector('.lv-add-close').onclick=()=>mask.remove();mask.querySelector('.lv-add-confirm').onclick=()=>{const t=trips.find(x=>String(x.id)===String(tripSel.value)),p=t?.plans?.find(x=>String(x.id)===String(planSel.value)),i=Number(daySel.value);if(!t||!p||!p.days?.[i])return alert('请选择有效的行程和日期');window.activeTrip=t.id;window.activePlan=p.id;window._lv2Day=i;window._lv2City=p.days[i].city||item.city||'';window._lvbanCatalogPending=item;mask.remove();if(typeof window.__lvbanOpenCreateDay==='function')window.__lvbanOpenCreateDay();else alert('每日行程入口暂未加载，请稍后再试')};
   }
-
-  function filter(items, type) {
-    const city = state[type + 'City'];
-    const query = state[type + 'Query'].trim().toLowerCase();
-    return items.filter(item => {
-      const cityOk = city === '全部' || val(item, 'city') === city;
-      if (!cityOk) return false;
-      if (!query) return true;
-      return [val(item, 'name'), val(item, 'city'), val(item, 'address'), val(item, 'type'), val(item, 'highlight'), val(item, 'recommended', 'dishes'), val(item, 'tags')]
-        .join(' ').toLowerCase().includes(query);
-    });
-  }
-
-  function installStyles() {
-    if (document.getElementById('lvbanCatalogStyles')) return;
-    const style = document.createElement('style');
-    style.id = 'lvbanCatalogStyles';
-    style.textContent = `.catalog-tools{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;margin:8px 0 14px}.catalog-search,.catalog-city{width:100%;min-height:46px;border:1px solid var(--line);border-radius:15px;background:#fff;padding:11px 14px;outline:none;color:var(--text)}.catalog-search:focus,.catalog-city:focus{border-color:var(--p);box-shadow:0 0 0 3px #6958f51a}.catalog-card{margin:10px 0}.catalog-extra{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.6}.catalog-count{margin:-3px 2px 10px;color:var(--muted);font-size:12px}@media(max-width:760px){.catalog-tools{grid-template-columns:1fr}.catalog-search,.catalog-city{min-height:48px}}`;
-    document.head.appendChild(style);
-  }
-
-  function ensureTool(target, type, items) {
-    const host = document.getElementById(target);
-    if (!host) return;
-    const old = host.previousElementSibling;
-    if (!old || !old.classList.contains('catalog-tools')) {
-      host.insertAdjacentHTML('beforebegin', toolbar(target, type, items));
-    }
-  }
-
-  function render(type) {
-    const data = window.LVBAN_DATA || {};
-    const key = type === 'spot' ? 'spots' : type === 'food' ? 'foods' : 'hotels';
-    const target = type === 'spot' ? 'spotList' : type === 'food' ? 'foodList' : 'hotelList';
-    const items = Array.isArray(data[key]) ? data[key] : [];
-    ensureTool(target, type, items);
-    const result = filter(items, type);
-    const host = document.getElementById(target);
-    if (!host) return;
-    host.innerHTML = `<div class="catalog-count">共 ${result.length} 条${type === 'spot' ? '景点' : type === 'food' ? '美食' : '酒店'}</div>` +
-      (result.length ? result.map(x => card(x, type)).join('') : `<div class="empty">没有找到匹配内容，换个关键词试试</div>`);
-  }
-
-  window.LVBAN_CATALOG = {
-    setQuery(type, value) {
-      state[type + 'Query'] = value;
-      render(type);
-      const input = document.getElementById((type === 'spot' ? 'spotList' : type === 'food' ? 'foodList' : 'hotelList') + 'Search');
-      if (input) { input.focus(); input.selectionStart = input.selectionEnd = value.length; }
-    },
-    setCity(type, value) {
-      state[type + 'City'] = value;
-      render(type);
-    },
-    renderAll() { render('spot'); render('food'); render('hotel'); }
-  };
-
-  function boot() {
-    installStyles();
-    const ready = window.LVBAN_DATA_READY || Promise.resolve(window.LVBAN_DATA || {});
-    ready.then(() => {
-      // 等原页面脚本完成定义后再接管，避免改动行程 / AI / 交通。
-      setTimeout(() => LVBAN_CATALOG.renderAll(), 0);
-    });
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  window.addFromCatalog=addFromCatalog;
+  window.LVBAN_CATALOG={setQuery(type,value){state[type+'Query']=value;render(type);const input=document.getElementById((type==='spot'?'spotList':type==='food'?'foodList':'hotelList')+'Search');if(input){input.focus();input.selectionStart=input.selectionEnd=value.length}},setCity(type,value){state[type+'City']=value;render(type)},renderAll(){render('spot');render('food');render('hotel')}};
+  function boot(){installStyles();(window.LVBAN_DATA_READY||Promise.resolve()).then(()=>setTimeout(()=>LVBAN_CATALOG.renderAll(),0))}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
