@@ -5,9 +5,10 @@
   const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
   const val=(o,...keys)=>{for(const k of keys)if(o&&o[k]!=null&&String(o[k]).trim())return o[k];return ''};
   const RECOMMENDED=['福州','厦门','平潭','北京','上海','杭州','重庆'];
-  function actionButtons(item){
+  function actionButtons(item,type){
     const name=val(item,'name'),address=val(item,'address');
-    return `<div class="actions"><button class="btn" onclick="copy('${esc(name)}')">复制名称</button><button class="btn" onclick="copy('${esc(address)}')">复制地址</button><button class="btn" onclick="nav('${esc(name)}','${esc(address)}')">导航</button><button class="btn primary" onclick='addFromCatalog(${JSON.stringify({name,address,city:val(item,'city'),type:'景点',note:val(item,'note','highlight')}).replaceAll("'","&#39;")})'>加入行程</button></div>`;
+    const nodeType=type==='food'?'美食':type==='hotel'?'酒店':'景点';
+    return `<div class="actions"><button class="btn" onclick="copy('${esc(name)}')">复制名称</button><button class="btn" onclick="copy('${esc(address)}')">复制地址</button><button class="btn" onclick="nav('${esc(name)}','${esc(address)}')">导航</button><button class="btn primary" onclick='addFromCatalog(${JSON.stringify({name,address,city:val(item,'city'),type:nodeType,note:val(item,'note','highlight')}).replaceAll("'","&#39;")})'>加入行程</button></div>`;
   }
   function toolbar(target,type){
     const q=state[type+'Query'];
@@ -16,7 +17,7 @@
   function card(item,type){
     const city=val(item,'city'),name=val(item,'name'),address=val(item,'address');
     const extra=type==='spot'?[val(item,'type'),val(item,'highlight'),val(item,'recommendedTime'),val(item,'ticket'),val(item,'openTime')].filter(Boolean):type==='food'?[val(item,'type'),val(item,'recommended','dishes'),val(item,'price')].filter(Boolean):[val(item,'rating'),val(item,'price'),val(item,'tags')].filter(Boolean);
-    return `<article class="data card catalog-card"><div class="city">${esc(city)}</div><h3>${esc(name)}</h3><div class="addr">📍 ${esc(address||'暂无详细地址')}</div>${extra.length?`<div class="catalog-extra">${extra.map(x=>`<span>${esc(x)}</span>`).join(' · ')}</div>`:''}${actionButtons({...item,type})}</article>`;
+    return `<article class="data card catalog-card"><div class="city">${esc(city)}</div><h3>${esc(name)}</h3><div class="addr">📍 ${esc(address||'暂无详细地址')}</div>${extra.length?`<div class="catalog-extra">${extra.map(x=>`<span>${esc(x)}</span>`).join(' · ')}</div>`:''}${actionButtons({...item,type},type)}</article>`;
   }
   function filter(items,type){const city=state[type+'City'],query=state[type+'Query'].trim().toLowerCase();return items.filter(item=>{if(city&&val(item,'city')!==city)return false;if(!query)return true;return [val(item,'name'),val(item,'city'),val(item,'address'),val(item,'type'),val(item,'highlight'),val(item,'recommended','dishes'),val(item,'tags')].join(' ').toLowerCase().includes(query)})}
   function installStyles(){if(document.getElementById('lvbanCatalogStyles'))return;const s=document.createElement('style');s.id='lvbanCatalogStyles';s.textContent=`
