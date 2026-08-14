@@ -50,21 +50,24 @@
     return window.LVBAN_DATA;
   });
 
-  // 只增强景点 / 美食 / 酒店；不修改行程、方案 A/B、AI、交通。
   const s = document.createElement('script');
   s.src = 'data/catalog-ui.js?v=20260813';
   s.defer = true;
   document.head.appendChild(s);
 
-  // 行程卡片点击兼容层：解决 ui-fixes 与最终行程渲染器的入口覆盖冲突。
   const tripClickFix = document.createElement('script');
   tripClickFix.src = 'trip-card-click-fix.js?v=20260813-1';
   tripClickFix.defer = true;
   document.head.appendChild(tripClickFix);
 
-  // 最终兜底：使用 document 捕获阶段接管 .trip-card 点击，避免后续脚本覆盖入口。
   const hardTripFix = document.createElement('script');
   hardTripFix.src = 'trip-card-hard-fix.js?v=20260814-1';
   hardTripFix.defer = true;
   document.head.appendChild(hardTripFix);
+
+  // 行程详情 V2：城市 → 属于该城市的日期 → 当天行程详情。
+  const tripLayoutV2 = document.createElement('script');
+  tripLayoutV2.src = 'trip-layout-v2.js?v=20260814-2';
+  tripLayoutV2.defer = true;
+  document.head.appendChild(tripLayoutV2);
 })();
