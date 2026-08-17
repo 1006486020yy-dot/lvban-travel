@@ -21,6 +21,7 @@
   load('itinerary-seed-fujian-2026.js?v=20260814-1');
   load('itinerary-oct1-city-split-fix.js?v=20260817-3');
   load('itinerary-city-date-complete-fix.js?v=20260817-1');
+  load('trip-city-date-direct.js?v=20260817-1');
   load('trip-share-collab-ui.js?v=20260817-1');
   const updateHomeTripSubtitle=()=>{const el=document.querySelector('#home .grid .tile .muted');if(el)el.textContent='准备好就出发吧'};
   updateHomeTripSubtitle();
