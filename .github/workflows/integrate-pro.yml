@@ -14,15 +14,18 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           marker='<script src="data.js"></script>'
-          block='\n<script src="data.js"></script>\n<script src="storage.js"></script>\n<script src="pro.js"></script>\n<script src="share-fix.js"></script>\n'
+          block='\n<script src="data.js"></script>\n<script src="storage.js"></script>\n<script src="pro.js"></script>\n<script src="share-fix.js"></script>\n<script src="travelmate-cross-device-fix.js"></script>\n'
           if marker in s:
-              import re
               s=re.sub(r'\n<script src="data.js"></script>.*?</body>', block+'</body>', s, count=1, flags=re.S)
-          elif '<script src="share-fix.js"></script>' not in s:
-              s=s.replace('</body>','\n<script src="share-fix.js"></script>\n</body>',1)
+          else:
+              for src in ['data.js','storage.js','pro.js','share-fix.js','travelmate-cross-device-fix.js']:
+                  tag=f'<script src="{src}"></script>'
+                  if tag not in s:
+                      s=s.replace('</body>',tag+'\n</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Commit integration
@@ -31,5 +34,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'fix: load robust itinerary sharing layer'
+          git commit -m 'fix: load cross-device itinerary sharing layer'
           git push
