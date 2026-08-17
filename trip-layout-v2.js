@@ -1,6 +1,7 @@
 /* 旅伴旅行管家 · 行程详情 V3
    固定结构：行程名称 → 当前行程城市 → 城市对应日期 → 当天行程详情
    每日节点使用“第一站 / 第二站 / 第三站”而不是时间。
+   支持一个日期属于多个城市：同一 DAY 可在不同城市入口分别显示对应节点。
 */
 (function(){
   'use strict';
@@ -14,24 +15,42 @@
   const nav=(name,address)=>{if(!address)return toast('暂无地址');window.open('https://uri.amap.com/search?keyword='+encodeURIComponent((name||'')+' '+address),'_blank')};
   const alternateEnabled=t=>t?.hasAlternateRoutes===true||t?.hasAlternateRoute===true||t?.alternateRoute===true||t?.useAlternateRoutes===true||t?.hasBackupRoute===true;
 
+  function dayCities(d){
+    const out=[];
+    const add=v=>{v=String(v||'').trim();if(!v)return;if(['全部城市','全部','景点','美食','交通','酒店','住宿'].includes(v))return;if(!out.includes(v))out.push(v)};
+    if(Array.isArray(d?.cities))d.cities.forEach(add);
+    if(d?.city)add(d.city);
+    if(!out.length&&(d?.items||[]).length)(d.items||[]).forEach(x=>add(x?.city));
+    return out;
+  }
+
   function cityList(t,p){
     const out=[];
     const add=v=>{v=String(v||'').trim();if(!v)return;if(['全部城市','全部','景点','美食','交通','酒店','住宿'].includes(v))return;if(!out.includes(v))out.push(v)};
     if(Array.isArray(t?.cityDurations)&&t.cityDurations.length)t.cityDurations.forEach(x=>add(x?.city));
-    if(!out.length)(p?.days||[]).forEach(d=>add(d?.city));
-    if(!out.length)(p?.days||[]).forEach(d=>(d?.items||[]).forEach(x=>add(x?.city)));
+    (p?.days||[]).forEach(d=>dayCities(d).forEach(add));
     if(!out.length)String(t?.city||'').split(/[·,、/|→＞>]+/).forEach(add);
     return out;
   }
-  function dayCity(t,p,i){
-    const d=p?.days?.[i];
-    if(d?.city)return String(d.city).trim();
-    const ds=Array.isArray(t?.cityDurations)?t.cityDurations:[];let n=0;
-    for(const x of ds){n+=Number(x?.days)||0;if(i<n)return String(x?.city||'').trim()}
-    const cs=[...new Set((d?.items||[]).map(x=>String(x?.city||'').trim()).filter(Boolean))];
-    return cs.length===1?cs[0]:'';
+
+  function daysForCity(t,p,city){
+    const r=[];
+    (p?.days||[]).forEach((d,i)=>{
+      const cities=dayCities(d);
+      if(cities.includes(city))r.push(i);
+    });
+    return r;
   }
-  function daysForCity(t,p,city){const r=[];(p?.days||[]).forEach((d,i)=>{if(dayCity(t,p,i)===city)r.push(i)});return r}
+
+  function itemsForCity(d,city){
+    const items=Array.isArray(d?.items)?d.items:[];
+    const cities=dayCities(d);
+    // 普通单城市日期：全部节点照常显示。
+    if(cities.length<=1)return items;
+    // 跨城市日期：优先读取节点自身 city；没有 city 的旧节点按日期所属城市兜底。
+    const matched=items.filter(x=>String(x?.city||'').trim()===city);
+    return matched.length?matched:items;
+  }
 
   function style(){
     if($('#lv-trip-v3-style'))return;
@@ -58,15 +77,15 @@
     style();const page=$('#trips'),t=current(),p=plan();if(!page||!t||!p)return;
     const cities=cityList(t,p);let city=window._lv2City;if(!cities.includes(city))city=cities[0]||'';window._lv2City=city;
     const indices=daysForCity(t,p,city);let dayIndex=Number(window._lv2Day);if(!indices.includes(dayIndex))dayIndex=indices[0]??0;window._lv2Day=dayIndex;
-    const d=p.days?.[dayIndex],items=Array.isArray(d?.items)?d.items:[];
+    const d=p.days?.[dayIndex],items=itemsForCity(d,city);
     const showPlans=alternateEnabled(t)&&Array.isArray(t.plans)&&t.plans.length>1;
     page.innerHTML=`<div class="lv2">
       <div class="lv2-head"><button class="lv2-back" id="lv2Back">‹</button><div class="lv2-title"><h2>${esc(t.name||'我的行程')}</h2><p>${esc(t.start||'')} ${t.end?'→ '+esc(t.end):''}</p></div><button class="lv2-more" id="lv2More">⋯</button></div>
       ${showPlans?`<div class="lv2-plans">${t.plans.map(x=>`<button class="lv2-plan ${x.id===p.id?'on':''}" data-plan="${esc(x.id)}">${esc(x.name||('方案 '+x.id))}</button>`).join('')}</div>`:''}
       <div class="lv2-row" aria-label="行程城市">${cities.map(c=>`<button class="lv2-city ${c===city?'on':''}" data-city="${esc(c)}">${esc(c)}</button>`).join('')}</div>
-      <div class="lv2-row" aria-label="城市日期">${indices.map(i=>{const x=p.days[i];return `<button class="lv2-date ${i===dayIndex?'on':''}" data-day="${i}"><b>${esc(x?.title||x?.label||('DAY '+(i+1)))}</b><small>${esc(x?.date||'')}</small></button>`}).join('')}</div>
+      <div class="lv2-row" aria-label="城市日期">${indices.map(i=>{const x=p.days[i];return `<button class="lv2-date ${i===dayIndex?'on':''}" data-day="${i}"><b>${esc(x?.label||('DAY '+(x?.day||i+1)))}</b><small>${esc(x?.date||'')}</small></button>`}).join('')}</div>
       <div class="lv2-detail-label">当天行程详情</div>
-      <section class="lv2-day"><div class="lv2-day-meta"><div class="date">${esc(d?.date||'')}</div><h3>${esc(d?.title||d?.label||('DAY '+(dayIndex+1)))}</h3><p>${esc(city)} · ${items.length} 项安排</p></div>
+      <section class="lv2-day"><div class="lv2-day-meta"><div class="date">${esc(d?.date||'')}</div><h3>${esc(d?.title||d?.label||('DAY '+(d?.day||dayIndex+1)))}</h3><p>${esc(city)} · ${items.length} 项安排</p></div>
       ${items.length?items.map((x,k)=>{const addr=x?.address||'';const stop=x?.stopLabel||`第 ${Number(x?.stop||k+1)} 站`;return `<article class="lv2-event"><div class="lv2-stop">${esc(stop)}</div><div class="lv2-card"><span class="lv2-type">${esc(x?.type||'行程')}</span><h3>${esc(x?.name||'未命名')}</h3>${addr?`<div class="lv2-address">📍 ${esc(addr)}</div>`:''}${x?.note?`<div class="lv2-note">${esc(x.note)}</div>`:''}<div class="lv2-actions">${addr?`<button data-copy="${encodeURIComponent(addr)}">复制地址</button><button data-nav-name="${encodeURIComponent(x?.name||'')}" data-nav-address="${encodeURIComponent(addr)}">导航</button>`:''}<button data-edit="${k}">编辑</button><button data-delete="${k}">删除</button></div></div></article>`}).join(''):`<div class="lv2-empty">当天还没有安排</div>`}
       <button class="lv2-add-day" id="lv2AddDay">＋ 添加行程节点</button></section></div>`;
 
