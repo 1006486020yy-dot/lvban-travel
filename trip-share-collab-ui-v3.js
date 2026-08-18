@@ -1,22 +1,66 @@
-/* 旅伴旅行管家｜短链接分享 / 好友协作 / 投票 v3.1 */
-(function(){
-'use strict';
-const $=(s,r=document)=>r.querySelector(s),dbObj=()=>typeof window.db==='function'?window.db():window.db;
-const trip=()=>{const d=dbObj();return(d?.trips||[]).find(x=>x.id===window.activeTrip)||(d?.trips||[])[0]};
-const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));
-const api=async(body)=>{const r=await fetch('/api/trip',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text()||'API error');return r.json()};
-const getRoom=async(code)=>{const r=await fetch('/api/trip?code='+encodeURIComponent(code));if(!r.ok)throw new Error(await r.text()||'room error');return r.json()};
-const waitReady=async(timeout=10000)=>{const start=Date.now();while(Date.now()-start<timeout){const d=dbObj();if(d&&Array.isArray(d.trips)&&typeof window.openTripCanvas==='function')return true;await new Promise(r=>setTimeout(r,100))}return false};
-function saveImported(t,code){const d=dbObj();if(!d||!Array.isArray(d.trips))return false;const copy=JSON.parse(JSON.stringify(t));copy.id='shared-'+code;copy.sharedCode=code;const i=d.trips.findIndex(x=>x.id===copy.id);if(i>=0)d.trips[i]=copy;else d.trips.push(copy);window.activeTrip=copy.id;window.activePlan=copy.plans?.[0]?.id||'A';window.save?.();return copy}
-async function resolveShare(){const p=new URLSearchParams(location.search),code=p.get('t')||p.get('share');if(!code)return;try{const ready=await waitReady();if(!ready)throw new Error('app not ready');const r=await getRoom(code);if(!r.trip)throw new Error('missing trip');const copy=saveImported(r.trip,code);if(!copy)throw new Error('import failed');const open=()=>{try{window.go?.('trips');window.activeTrip=copy.id;window.activePlan=copy.plans?.[0]?.id||'A';if(typeof window.openTripCanvas==='function'){window.openTripCanvas(copy.id)}else{window._lvbanTripCanvasV2?.();window.renderTripDetail?.()}}catch(e){console.warn('[旅伴] 分享行程打开失败',e)}};open();setTimeout(open,300);setTimeout(open,1000)}catch(e){console.warn('[旅伴] 分享行程读取失败',e)}}
-function style(){if($('#lv-share-v3-style'))return;const s=document.createElement('style');s.id='lv-share-v3-style';s.textContent='.lv-share-actions{display:flex;gap:8px;margin:0 0 12px;overflow:auto;padding:2px 0 3px}.lv-share-actions button{flex:1;min-width:88px;padding:10px 9px;border:1px solid #e8e6f4;border-radius:14px;background:#fff;color:#5d4de5;font-size:12px;font-weight:800;white-space:nowrap}.lv-share-actions button.primary{background:var(--p);color:#fff;border-color:var(--p)}.lv-share-card{background:#fff;border:1px solid #eceaf6;border-radius:18px;padding:14px;margin:8px 0}.lv-share-card h3{margin:0 0 6px;font-size:15px}.lv-share-card p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.55}.lv-share-vote{display:grid;gap:8px}.lv-share-option{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border:1px solid #e8e6f4;border-radius:13px;background:#fafaff}.lv-share-option button{padding:7px 10px;border-radius:10px;background:#efedff;color:#5d4de5;font-weight:800}.lv-share-code{display:flex;gap:7px}.lv-share-code input{flex:1;min-width:0;border:1px solid #e8e6f4;border-radius:12px;padding:10px;background:#f8f7fd}.lv-share-status{font-size:11px;color:var(--muted);line-height:1.5}';document.head.appendChild(s)}
-async function open(kind){const t=trip();if(!t)return;const m=$('#modal');if(!m)return;let room='';try{room=(await api({action:'create',trip:t})).code}catch(e){window.toast?.('分享服务暂时不可用，请稍后再试');return}const url=location.origin+location.pathname+'?t='+encodeURIComponent(room);let body='';
-if(kind==='share')body='<div class="lv-share-card"><h3>分享指定行程</h3><p>链接已缩短，朋友在另一台手机或电脑打开后会直接进入这条行程。</p><div class="lv-share-code"><input id="lvShareUrl" readonly value="'+esc(url)+'"><button class="btn primary" id="lvCopyShare">复制链接</button></div><div class="lv-share-status" style="margin-top:8px">共享编号：'+esc(room)+'</div></div><div class="lv-share-card"><h3>分享内容</h3><p>'+esc(t.name||'我的行程')+' · '+esc(t.start||'')+' ～ '+esc(t.end||'')+'</p><button class="btn primary" id="lvNativeShare">系统分享</button></div>';
-else if(kind==='collab')body='<div class="lv-share-card"><h3>好友协作</h3><p>朋友使用同一个短链接进入同一条行程。</p><div class="lv-share-code"><input id="lvCollabUrl" readonly value="'+esc(url)+'"><button class="btn primary" id="lvCopyCollab">复制</button></div><div class="lv-share-status" style="margin-top:8px">共享编号：'+esc(room)+'</div></div><div class="lv-share-card"><h3>协作权限</h3><div class="actions"><button class="btn" id="lvViewOnly">仅查看</button><button class="btn primary" id="lvCanEdit">可编辑</button></div></div>';
-else{let counts={route:0,spots:0,food:0};try{counts=(await getRoom(room)).votes||counts}catch(e){}const opts=[['路线更合适','route'],['景点更合适','spots'],['美食更合适','food']];body='<div class="lv-share-card"><h3>好友投票</h3><p>所有投票都保存在同一个共享行程里。</p><div class="lv-share-vote">'+opts.map(o=>'<div class="lv-share-option"><span>'+o[0]+' · <b id="lvVote-'+o[1]+'">'+Number(counts[o[1]]||0)+'</b>票</span><button data-vote="'+o[1]+'">投一票</button></div>').join('')+'</div></div>'}
-$('#modalTitle').textContent=kind==='share'?'分享行程':kind==='collab'?'好友协作':'好友投票';$('#modalBody').innerHTML=body;m.classList.add('show');
-$('#lvCopyShare')?.addEventListener('click',()=>navigator.clipboard?.writeText($('#lvShareUrl').value).then(()=>window.toast?.('分享链接已复制')));$('#lvNativeShare')?.addEventListener('click',()=>{const u=$('#lvShareUrl').value;if(navigator.share)navigator.share({title:t.name||'旅伴行程',text:'邀请你查看我的旅伴行程',url:u});else navigator.clipboard?.writeText(u).then(()=>window.toast?.('链接已复制'))});$('#lvCopyCollab')?.addEventListener('click',()=>navigator.clipboard?.writeText($('#lvCollabUrl').value).then(()=>window.toast?.('协作链接已复制')));
-document.querySelectorAll('[data-vote]').forEach(b=>b.onclick=async()=>{try{const r=await api({action:'vote',code:room,option:b.dataset.vote});const el=$('#lvVote-'+b.dataset.vote);if(el)el.textContent=Number(r.votes?.[b.dataset.vote]||0);window.toast?.('投票成功')}catch(e){window.toast?.('投票同步失败')}})}
-function inject(){style();const page=$('#trips'),head=page?.querySelector('.lv2-head');if(!head||$('#lvShareActions'))return;const bar=document.createElement('div');bar.id='lvShareActions';bar.className='lv-share-actions';bar.innerHTML='<button class="primary" id="lvShareBtn">分享</button><button id="lvCollabBtn">好友协作</button><button id="lvVoteBtn">投票</button>';head.insertAdjacentElement('afterend',bar);$('#lvShareBtn').onclick=()=>open('share');$('#lvCollabBtn').onclick=()=>open('collab');$('#lvVoteBtn').onclick=()=>open('vote')}
-async function boot(){await resolveShare();inject();setInterval(inject,500)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();window.LvbanShareCollabV3={open,inject};
+(() => {
+  const getTripParam = () => new URLSearchParams(location.search).get('t');
+  const isSharedTrip = () => !!getTripParam();
+
+  async function loadSharedTrip() {
+    const id = getTripParam();
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/trip/${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`trip ${res.status}`);
+      const payload = await res.json();
+      const trip = payload.trip || payload.data || payload;
+      if (!trip || typeof trip !== 'object') throw new Error('invalid trip');
+
+      // Shared-link mode must be isolated: replace the local trip list rather than
+      // importing the shared trip alongside existing local trips.
+      const storageKeys = ['lvban_trips', 'travelmate_trips', 'trips'];
+      const serialized = JSON.stringify([trip]);
+      storageKeys.forEach((key) => {
+        try { localStorage.setItem(key, serialized); } catch (_) {}
+      });
+      try { localStorage.setItem('lvban_shared_trip_id', id); } catch (_) {}
+
+      window.__LVBAN_SHARED_TRIP__ = trip;
+      window.__LVBAN_SHARED_TRIP_ID__ = id;
+
+      // Keep the original short link as the canonical URL. Never navigate to a
+      // generated local/detail URL and never silently strip ?t=...
+      history.replaceState(null, '', `${location.pathname}?t=${encodeURIComponent(id)}`);
+
+      // Notify the existing app and let its normal navigation open the sole trip.
+      window.dispatchEvent(new CustomEvent('lvban-shared-trip-ready', { detail: { trip, id } }));
+      window.dispatchEvent(new CustomEvent('lvban-data-ready'));
+
+      setTimeout(() => {
+        const tripName = trip.tripName || trip.name || '';
+        const cards = [...document.querySelectorAll('[data-trip-id], .trip-card, .trip-item, .itinerary-card')];
+        const target = cards.find(el => (el.textContent || '').includes(tripName));
+        if (target) target.click();
+        else if (typeof window.openTrip === 'function') window.openTrip(trip);
+        else if (typeof window.showTripDetail === 'function') window.showTripDetail(trip);
+      }, 250);
+    } catch (err) {
+      console.error('[lvban] shared trip load failed', err);
+    }
+  }
+
+  function hideOtherTripsInSharedMode() {
+    if (!isSharedTrip()) return;
+    const id = getTripParam();
+    const shared = window.__LVBAN_SHARED_TRIP__;
+    if (!shared) return;
+    // Defensive UI filtering: if the existing app renders a trip list from local
+    // data before the KV result arrives, keep only the shared trip once it is known.
+    document.querySelectorAll('[data-trip-id]').forEach(el => {
+      const eid = el.getAttribute('data-trip-id');
+      if (eid && eid !== id) el.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('lvban-shared-trip-ready', hideOtherTripsInSharedMode);
+  window.addEventListener('lvban-data-ready', () => setTimeout(hideOtherTripsInSharedMode, 50));
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadSharedTrip, { once: true });
+  else loadSharedTrip();
 })();
