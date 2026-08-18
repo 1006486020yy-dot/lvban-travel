@@ -1,0 +1,3 @@
+Cloudflare Pages deployment trigger.
+
+No application logic changed.
