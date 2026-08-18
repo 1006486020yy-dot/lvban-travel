@@ -1,5 +1,5 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
-const code=()=>{const a=new Uint8Array(9);crypto.getRandomValues(a);return 'LV'+Array.from(a,b=>b.toString(36).padStart(2,'0')).join('').slice(0,12).toUpperCase()};
+const code=()=>{const a=new Uint8Array(6);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(36)).join('').slice(0,6).toUpperCase()};
 export async function onRequestGet({request,env}){
   if(!env.LVBAN_KV)return json({error:'LVBAN_KV_NOT_CONFIGURED'},503);
   const c=new URL(request.url).searchParams.get('code');if(!c)return json({error:'missing code'},400);
