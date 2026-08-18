@@ -1,4 +1,4 @@
-/* 旅伴旅行管家｜行程层级与跨城修补加载器 v2 */
+/* 旅伴旅行管家｜行程层级与跨城修补加载器 v3 */
 (function(){
   'use strict';
   function load(src, marker){
@@ -11,7 +11,7 @@
   }
   function boot(){
     load('itinerary-oct1-city-split-fix.js?v=20260818-3','lvban-oct1-fix');
-    load('trip-flow-fix.js?v=20260818-2','lvban-trip-flow-fix');
+    load('trip-flow-fix.js?v=20260818-3','lvban-trip-flow-fix');
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
