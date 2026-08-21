@@ -9,7 +9,7 @@
  function dayMap(arr){return (arr||[]).map((d,i)=>({id:uid(),label:'DAY '+i,date:d.date,title:d.title,city:d.city,items:(d.items||[]).map(x=>({id:uid(),time:x[0]||'09:00',name:x[1]||'',address:x[2]||'',city:guessCity(x[2]||''),type:guessType(x[1]||''),budget:0,note:x[3]||''}))}));}
  function guessCity(a){if(/福州/.test(a))return '福州';if(/平潭/.test(a))return '平潭';if(/泉州|石狮/.test(a))return '泉州';return '厦门';}
  function guessType(n){return /酒店/.test(n)?'酒店':/D\d+|C\d+|高铁|动车|前往|机场|车站/.test(n)?'交通':/店|餐|美食|粥|面|牛排|肉粽|沙茶|五香|花生汤|麻糍/.test(n)?'美食':'景点';}
- function makeMainTrip(){const schedules=window.schedules||{};return {id:'trip-main',name:'十一福建游',city:'福州 · 平潭 · 泉州 · 厦门',start:'2026-09-28',end:'2026-10-04',people:1,plans:[{id:'A',name:'方案 A',days:dayMap(schedules.A||[])},{id:'B',name:'方案 B',days:dayMap(schedules.B||[])}]};}
+ function makeMainTrip(){const schedules=window.schedules||{};return {id:'trip-main',name:'旅伴旅行管家｜十一福建游',city:'福州 · 平潭 · 厦门',start:'2026-09-28',end:'2026-10-04',people:1,plans:[{id:'A',name:'方案 A',days:dayMap(schedules.A||[])},{id:'B',name:'方案 B',days:dayMap(schedules.B||[])}]};}
  const existing=load(),removed=deleted(); let trips=Array.isArray(existing.trips)?existing.trips.filter(t=>!removed.includes(t.id)):[];
  if(!trips.length&&!removed.includes('trip-main'))trips=[makeMainTrip()];
  window.db={trips,spots:(window.LVBAN_DATA?.spots||[]).map(x=>({...x})),foods:(window.LVBAN_DATA?.foods||[]).map(x=>({...x})),hotels:[],favorites:existing.favorites||{spots:[],foods:[],hotels:[],other:[]}};
