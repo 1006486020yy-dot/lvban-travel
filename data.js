@@ -14,6 +14,7 @@
   load('catalog-add-flow-v2.js?v=20260821-1');
   load('catalog-add-flow-unified.js?v=20260821-1');
   load('itinerary-seed-fujian-2026.js?v=20260821-1');
+  load('share-runtime-fix.js?v=20260821-1');
   load('share-fix.js?v=20260821-2');
   load('trip-list-dom-fix.js?v=20260821-1');
   const updateHomeTripSubtitle=()=>{const el=document.querySelector('#home .grid .tile .muted');if(el)el.textContent='准备好就出发吧'};
