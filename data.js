@@ -16,7 +16,8 @@
   load('fujian-xiamen-date-cleanup.js?v=20260821-3');
   load('share-runtime-fix.js?v=20260821-1');
   load('trip-list-dom-fix.js?v=20260821-1');
-  load('new-trip-form-v2.js?v=20260821-1');
+  load('new-trip-form-v2.js?v=20260821-2');
+  load('new-trip-takeover.js?v=20260821-1');
   const updateHomeTripSubtitle=()=>{const el=document.querySelector('#home .grid .tile .muted');if(el)el.textContent='准备好就出发吧'};
   updateHomeTripSubtitle();
   window.addEventListener('lvban-data-ready',updateHomeTripSubtitle);
