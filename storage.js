@@ -20,6 +20,27 @@
  window.currentPlan=()=>{const t=window.currentTrip();return t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0];};
  window.selectTrip=function(id){window.activeTrip=id;const t=window.currentTrip();window.activePlan=t?.plans?.[0]?.id||'A';window.activeDay=0;window.renderTrips?.();};
  window.switchPlan=function(id){window.activePlan=id;window.activeDay=0;window.__lvbanRenderTripDetail?.()||window.renderTripDetail?.();};
- const tripCreateFix=document.createElement('script');tripCreateFix.src='create-trip-fix.js?v=20260821-1';document.head.appendChild(tripCreateFix);
- const countdownFix=document.createElement('script');countdownFix.src='trip-countdown.js?v=20260813-1';document.head.appendChild(countdownFix);
+ 
+ // 新建行程唯一入口：禁止旧 create-trip-fix.js 再覆盖 newTrip。
+ function activateNewTripV2(){
+   if(window.__lvbanNewTripV2 && typeof window.newTrip==='function'){
+     window.openNewTrip=window.newTrip;
+     return;
+   }
+   const id='lv-storage-new-trip-v2';
+   let s=document.getElementById(id);
+   if(s){
+     if(window.__lvbanNewTripV2){window.openNewTrip=window.newTrip;return;}
+     s.addEventListener('load',()=>{window.openNewTrip=window.newTrip;});
+     return;
+   }
+   s=document.createElement('script');
+   s.id=id;
+   s.src='new-trip-form-v2.js?v=20260824-final-2';
+   s.onload=()=>{if(typeof window.newTrip==='function')window.openNewTrip=window.newTrip;};
+   s.onerror=()=>{};
+   document.head.appendChild(s);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(activateNewTripV2,0);setTimeout(activateNewTripV2,300);});
+ else {setTimeout(activateNewTripV2,0);setTimeout(activateNewTripV2,300);}
 })();
