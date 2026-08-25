@@ -19,6 +19,7 @@
   load('new-trip-form-v2.js?v=20260824-final');
   load('new-trip-takeover.js?v=20260824-1');
   load('new-trip-final-boot.js?v=20260825-1');
+  load('city-picker-refine.js?v=20260825-2');
   const updateHomeTripSubtitle=()=>{const el=document.querySelector('#home .grid .tile .muted');if(el)el.textContent='准备好就出发吧'};
   updateHomeTripSubtitle();
   window.addEventListener('lvban-data-ready',updateHomeTripSubtitle);
