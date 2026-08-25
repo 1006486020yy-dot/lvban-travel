@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const API='/api/share';
-  const esc=v=>String(v??'').replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;'}[c]||c));
+  const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));
   const toast=m=>window.toast?.(m)||alert(m);
   const trip=()=>window.db?.trips?.find(t=>String(t.id)===String(window.activeTrip))||window.db?.trips?.[0]||null;
   const parts=v=>String(v||'').split(/[·,、/|→＞>]+/).map(x=>x.trim()).filter(Boolean);
@@ -28,6 +28,5 @@
     const ai=document.getElementById('ai');
     if(ai){ai.querySelectorAll('.muted').forEach(n=>{if(n.textContent.includes('已接 /api/ai')||n.textContent.includes('火山方舟'))n.textContent='AI 旅行规划助手'});ai.querySelectorAll('.trip-level').forEach(n=>{if(n.textContent.includes('火山方舟'))n.remove()})}
   }
-  cleanAI();
-  new MutationObserver(cleanAI).observe(document.body,{subtree:true,childList:true,characterData:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanAI,{once:true});else cleanAI();
 })();
