@@ -32,30 +32,18 @@
         el.onclick=function(ev){if(ev)ev.preventDefault();fn();};
       });
     }
-
     document.querySelectorAll('#tripList .trip-card').forEach((el,index)=>{
       if(index >= ((window.db&&window.db.trips)||[]).length)return;
       const t=window.db.trips[index];
       if(!t)return;
-      el.onclick=function(ev){
-        if(ev)ev.preventDefault();
-        ev&&ev.stopPropagation();
-        openTrip(t.id);
-      };
-      el.style.pointerEvents='auto';
-      el.style.cursor='pointer';
+      el.onclick=function(ev){if(ev)ev.preventDefault();ev&&ev.stopPropagation();openTrip(t.id);};
+      el.style.pointerEvents='auto';el.style.cursor='pointer';
     });
     return true;
   }
 
-  function loadFinalCityInteraction(){
-    if(document.querySelector('script[data-lv-city-interaction-final]'))return;
-    const s=document.createElement('script');s.src='city-picker-interaction-final.js?v=20260825-final-1';s.defer=true;s.dataset.lvCityInteractionFinal='1';document.head.appendChild(s);
-  }
-
   function boot(){
     bind();
-    loadFinalCityInteraction();
     let n=0;
     const timer=setInterval(()=>{bind();if(++n>120)clearInterval(timer)},100);
   }
