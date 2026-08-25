@@ -3,8 +3,8 @@
   'use strict';
   var SRC='new-trip-form-v2.js?v=20260825-final';
   function bind(){
-    if(typeof window.openNewTrip==='function'){
-      window.newTrip=window.openNewTrip;
+    if(typeof window.newTrip==='function'){
+      window.openNewTrip=window.newTrip;
       window.__lvbanNewTripV2=true;
       document.querySelectorAll('button').forEach(function(b){
         var text=(b.textContent||'').replace(/\s+/g,'');
@@ -18,7 +18,7 @@
     return false;
   }
   function load(){
-    if(typeof window.openNewTrip==='function')return bind();
+    if(typeof window.newTrip==='function')return bind();
     if(document.getElementById('lv-create-trip-v2-loader'))return false;
     var s=document.createElement('script');
     s.id='lv-create-trip-v2-loader';
