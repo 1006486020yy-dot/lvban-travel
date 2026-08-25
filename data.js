@@ -7,7 +7,7 @@
   const mapHotel=x=>({id:x.hotelId||x.id,hotelId:x.hotelId||x.id,name:x['酒店名称']||x.name||'',city:x['城市']||x.city||'',address:x['地址']||x.address||'',rating:x['星级']||'',price:x['价格区间']||'',tags:x['标签']||'',image:x['图片']||'',latlng:x['经纬度']||'',favorite:x['用户收藏']||''});
   window.LVBAN_DATA={cities:['福州','平潭','泉州','厦门'],cityRecords:[],spots:[],foods:[],hotels:[]};
   window.LVBAN_DATA_READY=Promise.all([fetch(cityFile).then(r=>r.json()),fetch(spotFile).then(r=>r.json()),fetch(foodFile).then(r=>r.json()),fetch(hotelFile).then(r=>r.json())]).then(([cities,spots,foods,hotels])=>{window.LVBAN_DATA.cityRecords=cities;window.LVBAN_DATA.cities=cities.map(x=>x['城市']||x.city).filter(Boolean);window.LVBAN_DATA.spots=spots.map(mapSpot);window.LVBAN_DATA.foods=foods.map(mapFood);window.LVBAN_DATA.hotels=hotels.map(mapHotel);window.dispatchEvent(new CustomEvent('lvban-data-ready'));return window.LVBAN_DATA}).catch(err=>{console.error('[旅伴] 数据加载失败',err);window.dispatchEvent(new CustomEvent('lvban-data-error',{detail:err}));return window.LVBAN_DATA});
-  const load=src=>{const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s)};
+  const load=src=>{const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);};
   load('data/catalog-ui.js?v=20260821-1');
   load('trip-day-create.js?v=20260821-1');
   load('catalog-add-prefill.js?v=20260821-1');
@@ -16,8 +16,9 @@
   load('fujian-xiamen-date-cleanup.js?v=20260821-3');
   load('share-runtime-fix.js?v=20260821-1');
   load('trip-list-dom-fix.js?v=20260821-1');
-  load('new-trip-form-v2.js?v=20260821-2');
-  load('new-trip-takeover.js?v=20260821-1');
+  load('new-trip-form-v2.js?v=20260824-final');
+  load('new-trip-takeover.js?v=20260824-1');
+  load('new-trip-final-boot.js?v=20260825-1');
   const updateHomeTripSubtitle=()=>{const el=document.querySelector('#home .grid .tile .muted');if(el)el.textContent='准备好就出发吧'};
   updateHomeTripSubtitle();
   window.addEventListener('lvban-data-ready',updateHomeTripSubtitle);
