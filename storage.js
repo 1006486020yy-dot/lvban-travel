@@ -20,27 +20,29 @@
  window.currentPlan=()=>{const t=window.currentTrip();return t?.plans?.find(x=>x.id===window.activePlan)||t?.plans?.[0];};
  window.selectTrip=function(id){window.activeTrip=id;const t=window.currentTrip();window.activePlan=t?.plans?.[0]?.id||'A';window.activeDay=0;window.renderTrips?.();};
  window.switchPlan=function(id){window.activePlan=id;window.activeDay=0;window.__lvbanRenderTripDetail?.()||window.renderTripDetail?.();};
- 
- // 新建行程唯一入口：禁止旧 create-trip-fix.js 再覆盖 newTrip。
- function activateNewTripV2(){
-   if(window.__lvbanNewTripV2 && typeof window.newTrip==='function'){
-     window.openNewTrip=window.newTrip;
-     return;
-   }
-   const id='lv-storage-new-trip-v2';
-   let s=document.getElementById(id);
-   if(s){
-     if(window.__lvbanNewTripV2){window.openNewTrip=window.newTrip;return;}
-     s.addEventListener('load',()=>{window.openNewTrip=window.newTrip;});
-     return;
-   }
-   s=document.createElement('script');
-   s.id=id;
-   s.src='new-trip-form-v2.js?v=20260824-final-2';
-   s.onload=()=>{if(typeof window.newTrip==='function')window.openNewTrip=window.newTrip;};
-   s.onerror=()=>{};
-   document.head.appendChild(s);
+
+ // 新建行程唯一入口：立即提供可点击的同步入口，避免 V2 异步加载期间按钮无反应。
+ let v2Loading=false;
+ function loadNewTripV2(){
+   if(typeof window.newTrip==='function' && window.__lvbanNewTripV2)return Promise.resolve(window.newTrip);
+   if(v2Loading)return new Promise(resolve=>{const timer=setInterval(()=>{if(typeof window.newTrip==='function'&&window.__lvbanNewTripV2){clearInterval(timer);resolve(window.newTrip)}},30);setTimeout(()=>{clearInterval(timer);resolve(null)},5000)});
+   v2Loading=true;
+   return new Promise(resolve=>{
+     let s=document.getElementById('lv-storage-new-trip-v2');
+     if(!s){s=document.createElement('script');s.id='lv-storage-new-trip-v2';s.src='new-trip-form-v2.js?v=20260825-final-3';s.onload=()=>{v2Loading=false;resolve(typeof window.newTrip==='function'?window.newTrip:null)};s.onerror=()=>{v2Loading=false;resolve(null)};document.head.appendChild(s)}
+     else{s.addEventListener('load',()=>{v2Loading=false;resolve(typeof window.newTrip==='function'?window.newTrip:null)},{once:true});}
+   });
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(activateNewTripV2,0);setTimeout(activateNewTripV2,300);});
- else {setTimeout(activateNewTripV2,0);setTimeout(activateNewTripV2,300);}
+ // 这个函数在 storage.js 执行后立即存在，因此 index.html 的 onclick="newTrip()" 永远有响应。
+ window.newTrip=function(){
+   const fn=window.__lvbanNewTripV2&&typeof window.openNewTrip==='function'?window.openNewTrip:null;
+   if(fn){return fn();}
+   loadNewTripV2().then(f=>{if(f)f();else if(typeof window.modal==='function')window.modal('新建行程','<div class="empty">新建行程组件加载失败，请刷新页面重试。</div>');});
+ };
+ window.openNewTrip=window.newTrip;
+ function activateNewTripV2(){
+   loadNewTripV2().then(fn=>{if(fn){window.openNewTrip=fn;window.newTrip=fn;window.__lvbanNewTripV2=true;}});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{activateNewTripV2();});
+ else activateNewTripV2();
 })();
