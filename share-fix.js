@@ -16,4 +16,33 @@
   if(location.search.includes('share=')){window.addEventListener('load',()=>setTimeout(loadShared,100));return}
   style();
   const boot=document.createElement('script');boot.src='unified-trip-router.js?v=20260821-1';document.head.appendChild(boot);
+
+  // 新建行程最终点击兜底：拦截旧入口和被其他脚本重绘的入口，统一进入当前 V2。
+  function invokeNewTrip(){
+    const fn=typeof window.openNewTrip==='function'?window.openNewTrip:(typeof window.newTrip==='function'?window.newTrip:null);
+    if(fn){try{fn();return true}catch(e){toast('新建行程打开失败：'+(e?.message||e));return true}}
+    const s=document.createElement('script');
+    s.src='new-trip-form-v2.js?v=20260825-click-final';
+    s.onload=()=>{const f=typeof window.openNewTrip==='function'?window.openNewTrip:window.newTrip;if(typeof f==='function')f();else toast('新建行程组件加载失败')};
+    s.onerror=()=>toast('新建行程组件加载失败');
+    document.head.appendChild(s);
+    return true;
+  }
+  function bindNewTripClick(){
+    const ids=['#utNew','#trips .title button.btn.primary'];
+    ids.forEach(sel=>document.querySelectorAll(sel).forEach(b=>{
+      b.style.pointerEvents='auto';
+      b.style.position='relative';
+      b.style.zIndex='100001';
+      b.onclick=e=>{e.preventDefault();e.stopPropagation();invokeNewTrip()};
+    }));
+  }
+  document.addEventListener('click',e=>{
+    const b=e.target?.closest?.('#utNew,#trips .title button.btn.primary');
+    if(!b)return;
+    e.preventDefault();e.stopPropagation();invokeNewTrip();
+  },true);
+  const bindTimer=setInterval(bindNewTripClick,300);
+  setTimeout(()=>clearInterval(bindTimer),15000);
+  setTimeout(bindNewTripClick,100);
 })();
