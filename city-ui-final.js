@@ -1,22 +1,79 @@
 /* 旅伴旅行管家 · 城市选择最终 UI
- * 只重做城市选择交互，不改日期和创建逻辑。
+ * 仅负责新建行程城市选择；不接管日期、不修改创建逻辑。
  */
 (function(){
-'use strict';
-const $=(s,r=document)=>r.querySelector(s);
-const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));
-const recommended=['福州','厦门','平潭','杭州','上海','成都','北京','西安'];
-const fallback=['北京','上海','广州','深圳','杭州','成都','重庆','南京','西安','福州','平潭','厦门','泉州','长春','张家界','青岛','大连','苏州','长沙','武汉','桂林','昆明','大理','丽江','三亚','珠海','汕头','天津','石家庄','太原','沈阳','哈尔滨','吉林','延吉','济南','烟台','威海','郑州','洛阳','开封','合肥','黄山','宁波','温州','绍兴','嘉兴','金华','台州','南昌','九江','上饶','宜昌','襄阳','岳阳','海口','北海','贵阳','遵义','拉萨','西宁','兰州','敦煌','银川','乌鲁木齐','喀什','西双版纳','腾冲','香格里拉','稻城亚丁','台北'];
-const cities=()=>[...new Set(fallback.concat(window.LVBAN_DATA?.cities||[]).filter(Boolean))];
-function css(){if($('#lv-city-ui-final-style'))return;const s=document.createElement('style');s.id='lv-city-ui-final-style';s.textContent=`
-.lv-city-ui{border:1px solid #e8e6f4;border-radius:20px;background:linear-gradient(180deg,#fff,#fbfaff);padding:13px;box-shadow:0 8px 26px rgba(105,88,245,.06)}
-.lv-city-bar{display:flex;gap:8px;align-items:center}.lv-city-search{position:relative;flex:1}.lv-city-search span{position:absolute;left:12px;top:10px;color:#766c98}.lv-city-search input{padding-left:34px!important;background:#f7f5ff!important;border:1px solid #eeeaff!important}.lv-city-more{height:44px;padding:0 13px;border:1px solid #ded8ff;border-radius:14px;background:linear-gradient(135deg,#f1eeff,#e9e5ff);color:#5d4de5;font-weight:800;white-space:nowrap;cursor:pointer}.lv-city-label{font-size:11px;color:#7a748d;margin:12px 0 7px}.lv-city-rec,.lv-city-results{display:flex;flex-wrap:wrap;gap:7px}.lv-city-pill{border:1px solid #e5e1f3;background:#fff;color:#403a55;border-radius:13px;padding:8px 11px;font-size:12px;cursor:pointer}.lv-city-pill.on{background:#6958f5;border-color:#6958f5;color:#fff;box-shadow:0 5px 12px rgba(105,88,245,.18)}.lv-city-selected{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.lv-city-selected .lvntv2-city-chip{box-shadow:0 3px 10px rgba(105,88,245,.08)}.lv-city-overlay{position:fixed;inset:0;z-index:100090;background:rgba(25,21,48,.42);display:none;align-items:flex-end}.lv-city-overlay.show{display:flex}.lv-city-sheet{width:100%;max-width:620px;margin:auto;background:linear-gradient(180deg,#fbfaff,#f7f5ff);border:1px solid #e6e0ff;border-bottom:0;border-radius:28px 28px 0 0;padding:18px;max-height:86vh;overflow:auto;box-shadow:0 -20px 55px rgba(46,34,110,.2)}.lv-city-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.lv-city-sheet-head b{font-size:18px;color:#29233f}.lv-city-close{width:34px;height:34px;border:0;border-radius:11px;background:#eeeaff;color:#5d4de5;font-size:19px;cursor:pointer}.lv-city-sheet .lvntv2-city-panel{display:block!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important}.lv-city-sheet .lvntv2-panel-title{color:#746b8d}.lv-city-sheet .lvntv2-city-btn{background:#fff}.lv-city-sheet .lvntv2-done{background:linear-gradient(135deg,#6958f5,#7b69ff);box-shadow:0 8px 18px rgba(105,88,245,.2)}
-`;
-document.head.appendChild(s)}
-function state(){return window.__lvNewTripState||{cities:[]}}
-function clickCity(name){const panel=$('#lvntv2CityPanel');if(!panel)return;const btn=[...panel.querySelectorAll('[data-city]')].find(b=>b.textContent.trim()===name);if(btn)btn.click()}
-function renderQuick(){const root=$('#lvCityUI'),q=($('#lvCityQuickSearch')?.value||'').trim().toLowerCase();if(!root)return;const selected=state().cities||[];const rec=$('#lvCityRec');const results=$('#lvCityResults');if(q){const arr=cities().filter(c=>c.toLowerCase().includes(q)).slice(0,8);results.innerHTML=arr.map(c=>`<button type="button" class="lv-city-pill ${selected.includes(c)?'on':''}" data-quick="${esc(c)}">${esc(c)}</button>`).join('')||`<button type="button" class="lv-city-pill" data-custom="1">＋ 使用“${esc($('#lvCityQuickSearch').value.trim())}”</button>`;rec.innerHTML=''}else{rec.innerHTML=recommended.map(c=>`<button type="button" class="lv-city-pill ${selected.includes(c)?'on':''}" data-quick="${esc(c)}">${esc(c)}</button>`).join('');results.innerHTML=''}root.querySelectorAll('[data-quick]').forEach(b=>b.onclick=e=>{e.preventDefault();clickCity(b.dataset.quick);setTimeout(renderQuick,20)});const custom=root.querySelector('[data-custom]');if(custom)custom.onclick=e=>{e.preventDefault();const q=$('#lvCityQuickSearch').value.trim();if(q){const input=$('#lvntv2CitySearch');input.value=q;input.dispatchEvent(new Event('input',{bubbles:true}));const c=$('#lvntv2Custom');if(c&&c.classList.contains('show'))c.click();else{const s=state();s.cities=[...new Set((s.cities||[]).concat(q))];window.__lvNewTripState=s;document.querySelector('#lvntv2Selected')?.dispatchEvent(new Event('change'))}setTimeout(renderQuick,30)}}}
-function enhance(){const old=$('#lvntv2CitySummary');if(!old||old.dataset.cityFinal)return false;css();old.dataset.cityFinal='1';const selected=$('#lvntv2Selected');const panel=$('#lvntv2CityPanel');if(!panel)return false;const root=document.createElement('div');root.id='lvCityUI';root.className='lv-city-ui';root.innerHTML=`<div class="lv-city-bar"><div class="lv-city-search"><span>⌕</span><input id="lvCityQuickSearch" placeholder="搜索城市或直接输入"></div><button type="button" class="lv-city-more" id="lvCityMore">更多城市</button></div><div class="lv-city-label">推荐城市</div><div id="lvCityRec" class="lv-city-rec"></div><div id="lvCityResults" class="lv-city-results"></div><div class="lv-city-selected" id="lvCitySelectedWrap"></div>`;old.replaceWith(root);if(selected)$('#lvCitySelectedWrap').appendChild(selected);const overlay=document.createElement('div');overlay.id='lvCityOverlay';overlay.className='lv-city-overlay';overlay.innerHTML=`<div class="lv-city-sheet"><div class="lv-city-sheet-head"><b>选择更多城市</b><button type="button" class="lv-city-close">×</button></div><div id="lvCityPanelHost"></div></div>`;document.body.appendChild(overlay);$('#lvCityPanelHost').appendChild(panel);$('#lvCityMore').onclick=e=>{e.preventDefault();e.stopPropagation();overlay.classList.add('show');panel.classList.add('open');panel.style.display='block';panel.querySelector('#lvntv2CitySearch')?.focus()};overlay.querySelector('.lv-city-close').onclick=()=>overlay.classList.remove('show');overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove('show')};const q=$('#lvCityQuickSearch');q.oninput=()=>{const p=$('#lvntv2CitySearch');if(p){p.value=q.value;p.dispatchEvent(new Event('input',{bubbles:true}))}renderQuick()};renderQuick();const observer=new MutationObserver(()=>{renderQuick()});observer.observe(selected||root,{childList:true,subtree:true});return true}
-function boot(){const wrap=()=>{if(typeof window.newTrip!=='function')return false;if(window.newTrip.__cityUIFinal)return true;const original=window.newTrip;const fn=function(){const r=original.apply(this,arguments);setTimeout(enhance,80);return r};fn.__cityUIFinal=true;window.newTrip=fn;window.openNewTrip=fn;return true};wrap();const timer=setInterval(()=>{wrap();enhance()},150);setTimeout(()=>clearInterval(timer),20000)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  'use strict';
+  const $=(s,r=document)=>r.querySelector(s);
+  const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));
+  const recommended=['福州','厦门','平潭','杭州','上海','成都','北京','西安'];
+  const preset=['北京','上海','广州','深圳','杭州','成都','重庆','南京','西安','福州','平潭','厦门','泉州','长春','张家界','青岛','大连','苏州','长沙','武汉','桂林','昆明','大理','丽江','三亚','珠海','汕头','天津','石家庄','太原','沈阳','哈尔滨','吉林','延吉','济南','烟台','威海','郑州','洛阳','开封','合肥','黄山','宁波','温州','绍兴','嘉兴','金华','台州','南昌','九江','上饶','宜昌','襄阳','岳阳','海口','北海','贵阳','遵义','拉萨','西宁','兰州','敦煌','银川','乌鲁木齐','喀什','西双版纳','腾冲','香格里拉','稻城亚丁','台北'];
+  const allCities=()=>[...new Set(preset.concat(window.LVBAN_DATA?.cities||[]).filter(Boolean))];
+  const state=()=>window.__lvNewTripState||(window.__lvNewTripState={start:'',end:'',cities:[],cityDays:{},picker:false});
+  const setCities=list=>{const s=state();window.__lvNewTripState={...s,cities:[...new Set(list)]};};
+
+  function css(){
+    if($('#lv-city-final-style'))return;
+    const s=document.createElement('style');s.id='lv-city-final-style';s.textContent=`
+      #lvCityUIFinal{border:1px solid #e7e2ff;border-radius:20px;background:linear-gradient(180deg,#fff,#faf8ff);padding:13px;box-shadow:0 8px 26px rgba(105,88,245,.07)}
+      .lvcf-bar{display:flex;gap:8px;align-items:center}.lvcf-search{position:relative;flex:1}.lvcf-search-icon{position:absolute;left:13px;top:11px;color:#756c96}.lvcf-input{width:100%;height:44px;box-sizing:border-box;border:1px solid #e6e1f5;border-radius:14px;background:#f8f6ff;padding:0 12px 0 34px;outline:none;color:#312b49}.lvcf-input:focus{border-color:#a79bf7;box-shadow:0 0 0 3px rgba(105,88,245,.08)}
+      .lvcf-more{height:44px;border:1px solid #d9d0ff;border-radius:14px;background:linear-gradient(135deg,#f2efff,#e9e4ff);color:#5b4be2;padding:0 14px;font-weight:800;cursor:pointer;white-space:nowrap}.lvcf-label{font-size:11px;color:#77718b;margin:13px 0 7px}.lvcf-pills{display:flex;flex-wrap:wrap;gap:7px}.lvcf-pill{border:1px solid #e5e0f3;background:#fff;color:#403951;border-radius:13px;padding:8px 11px;font-size:12px;cursor:pointer}.lvcf-pill.on{background:#6958f5;border-color:#6958f5;color:#fff;box-shadow:0 5px 12px rgba(105,88,245,.18)}
+      .lvcf-selected{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}.lvcf-chip{display:inline-flex;align-items:center;gap:5px;border-radius:12px;background:#f0edff;color:#5d4de5;padding:7px 10px;font-size:12px;font-weight:700}.lvcf-chip button{border:0;background:transparent;color:inherit;font-weight:900;cursor:pointer;padding:0}
+      #lvCityFinalOverlay{position:fixed;inset:0;z-index:100500;display:none;align-items:center;justify-content:center;background:rgba(29,24,55,.42);padding:18px;box-sizing:border-box}#lvCityFinalOverlay.show{display:flex}.lvcf-sheet{width:min(620px,100%);max-height:86vh;overflow:auto;border:1px solid #e3ddff;border-radius:26px;background:linear-gradient(180deg,#fff,#f8f6ff);box-shadow:0 24px 70px rgba(35,26,86,.25);padding:18px;box-sizing:border-box}.lvcf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.lvcf-head b{font-size:18px;color:#2e2843}.lvcf-close{width:34px;height:34px;border:0;border-radius:11px;background:#eeeaff;color:#5d4de5;font-size:20px;cursor:pointer}.lvcf-modal-search{position:relative;margin-bottom:12px}.lvcf-modal-search .lvcf-input{background:#f7f5ff}.lvcf-custom{display:none;margin:8px 0;padding:11px 12px;border-radius:13px;background:#f0edff;color:#5d4de5;font-weight:800;cursor:pointer}.lvcf-custom.show{display:block}.lvcf-modal-grid{display:flex;flex-wrap:wrap;gap:8px}.lvcf-done{position:sticky;bottom:0;width:100%;margin-top:16px;height:46px;border:0;border-radius:14px;background:linear-gradient(135deg,#6958f5,#7c69ff);color:#fff;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(105,88,245,.2)}
+    `;document.head.appendChild(s);
+  }
+
+  function syncDays(){
+    const s=state();
+    const start=$('#lvntv2Start');
+    if(start){start.dispatchEvent(new Event('change',{bubbles:true}));}
+    const end=$('#lvntv2End');
+    if(end){end.dispatchEvent(new Event('change',{bubbles:true}));}
+  }
+
+  function toggleCity(name){
+    const s=state();const has=s.cities.includes(name);setCities(has?s.cities.filter(c=>c!==name):s.cities.concat(name));
+    renderAll();syncDays();
+  }
+
+  function addCustom(value){
+    const name=(value||'').trim();if(!name)return;
+    const s=state();const existing=s.cities.some(c=>c.toLowerCase()===name.toLowerCase());if(!existing)setCities(s.cities.concat(name));
+    renderAll();syncDays();
+  }
+
+  function pill(name,modal){
+    const selected=state().cities.includes(name);return `<button type="button" class="${modal?'lvcf-pill':'lvcf-pill'} ${selected?'on':''}" data-lvcf-city="${esc(name)}">${selected?'✓ ':''}${esc(name)}</button>`;
+  }
+
+  function renderMain(){
+    const root=$('#lvCityUIFinal');if(!root)return;const selected=state().cities;qMain.value=qMain.value||'';const q=qMain.value.trim().toLowerCase();
+    const list=q?allCities().filter(c=>c.toLowerCase().includes(q)).slice(0,10):[];
+    $('#lvCityFinalResults').innerHTML=q?(list.length?list.map(c=>pill(c,false)).join(''):`<button type="button" class="lvcf-pill" data-lvcf-custom-main="1">＋ 使用“${esc(qMain.value.trim())}”</button>`):'';
+    $('#lvCityFinalRecommended').innerHTML=q?'':recommended.map(c=>pill(c,false)).join('');
+    $('#lvCityFinalSelected').innerHTML=selected.length?selected.map(c=>`<span class="lvcf-chip">${esc(c)}<button type="button" data-lvcf-remove="${esc(c)}">×</button></span>`).join(''):'<span style="font-size:12px;color:#9993aa">尚未选择城市</span>';
+    root.querySelectorAll('[data-lvcf-city]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();toggleCity(b.dataset.lvcfCity)});
+    root.querySelectorAll('[data-lvcf-remove]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();toggleCity(b.dataset.lvcfRemove)});
+    const custom=root.querySelector('[data-lvcf-custom-main]');if(custom)custom.onclick=e=>{e.preventDefault();addCustom(qMain.value)};
+  }
+
+  let qMain;
+  function renderModal(){
+    const overlay=$('#lvCityFinalOverlay');if(!overlay)return;const q=$('#lvCityFinalModalSearch').value.trim().toLowerCase();const list=allCities().filter(c=>!q||c.toLowerCase().includes(q));
+    $('#lvCityFinalModalGrid').innerHTML=list.map(c=>pill(c,true)).join('');
+    const custom=$('#lvCityFinalCustom');custom.classList.toggle('show',!!q&&!allCities().some(c=>c.toLowerCase()===q));custom.textContent=q?`＋ 使用“${$('#lvCityFinalModalSearch').value.trim()}”作为自定义城市`:'';
+    overlay.querySelectorAll('[data-lvcf-city]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();toggleCity(b.dataset.lvcfCity);renderModal()});
+  }
+
+  function enhance(){
+    const old=$('#lvntv2CitySummary');if(!old||old.dataset.finalCityDone)return false;css();old.dataset.finalCityDone='1';
+    const panel=$('#lvntv2CityPanel');if(panel){panel.style.display='none';panel.classList.remove('open');}
+    const root=document.createElement('div');root.id='lvCityUIFinal';root.innerHTML=`<div class="lv-city-title" style="font-size:14px;font-weight:800;color:#312b49;margin-bottom:9px">目的地</div><div class="lvcf-bar"><div class="lvcf-search"><span class="lvcf-search-icon">⌕</span><input id="lvCityFinalMainSearch" class="lvcf-input" placeholder="搜索城市或直接输入"></div><button type="button" id="lvCityFinalMore" class="lvcf-more">更多城市</button></div><div class="lvcf-label">推荐城市</div><div id="lvCityFinalRecommended" class="lvcf-pills"></div><div id="lvCityFinalResults" class="lvcf-pills"></div><div class="lvcf-label">已选择</div><div id="lvCityFinalSelected" class="lvcf-selected"></div>`;old.replaceWith(root);qMain=$('#lvCityFinalMainSearch');
+    const overlay=document.createElement('div');overlay.id='lvCityFinalOverlay';overlay.innerHTML=`<div class="lvcf-sheet"><div class="lvcf-head"><b>选择更多城市</b><button type="button" class="lvcf-close" id="lvCityFinalClose">×</button></div><div class="lvcf-modal-search"><span class="lvcf-search-icon">⌕</span><input id="lvCityFinalModalSearch" class="lvcf-input" placeholder="搜索预备城市或输入自定义城市"></div><div id="lvCityFinalCustom" class="lvcf-custom"></div><div class="lvcf-label">预备城市</div><div id="lvCityFinalModalGrid" class="lvcf-modal-grid"></div><button type="button" id="lvCityFinalDone" class="lvcf-done">完成选择（0）</button></div>`;document.body.appendChild(overlay);
+    const open=()=>{overlay.classList.add('show');renderModal();setTimeout(()=>$('#lvCityFinalModalSearch')?.focus(),30)};$('#lvCityFinalMore').onclick=e=>{e.preventDefault();e.stopPropagation();open()};$('#lvCityFinalClose').onclick=e=>{e.preventDefault();overlay.classList.remove('show')};overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove('show')};
+    $('#lvCityFinalDone').onclick=e=>{e.preventDefault();e.stopPropagation();overlay.classList.remove('show');renderMain();syncDays()};
+    $('#lvCityFinalModalSearch').oninput=renderModal;$('#lvCityFinalCustom').onclick=e=>{e.preventDefault();addCustom($('#lvCityFinalModalSearch').value);renderModal()};qMain.oninput=renderMain;renderAll();return true;
+  }
+  function renderAll(){renderMain();renderModal();const b=$('#lvCityFinalDone');if(b)b.textContent=`完成选择（${state().cities.length}）`;}
+  function boot(){let n=0;const timer=setInterval(()=>{if(enhance()||$('#lvCityUIFinal')){clearInterval(timer)}if(++n>100)clearInterval(timer)},150)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
