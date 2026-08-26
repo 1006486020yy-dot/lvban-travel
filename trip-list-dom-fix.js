@@ -10,9 +10,11 @@
     const list=trips();
     grid.innerHTML=list.map(t=>{
       const p=t.plans?.[0],days=p?.days||[],count=days.reduce((n,d)=>n+(d.items?.length||0),0);
+      const actualCities=[...new Set(days.map(d=>d.city||d.location).filter(Boolean))];
+      const cityText=actualCities.length?actualCities.join(' · '):(t.city||'');
       return `<div class="ut-card" data-trip-dom="${esc(t.id)}">
         <button type="button" class="ut-delete" data-delete-dom="${esc(t.id)}">删除</button>
-        <div class="ut-cover"><span class="days">${days.length||0}天</span><div class="city">${esc(t.city||'多城市旅行')}</div></div>
+        <div class="ut-cover"><span class="days">${days.length||0}天</span><div class="city">${esc(cityText)}</div></div>
         <div class="ut-body"><h3>${esc(t.name||'未命名行程')}</h3><p>${esc(t.start||'')} ${t.end?'— '+esc(t.end):''}</p><div class="ut-meta"><span>${esc(p?.name||'方案 A')}</span><span>${count} 个安排</span></div></div>
       </div>`;
     }).join('');
