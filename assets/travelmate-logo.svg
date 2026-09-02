@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="旅伴旅行管家 TravelMate logo">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7663F6"/><stop offset=".58" stop-color="#7B9AF6"/><stop offset="1" stop-color="#46C28E"/></linearGradient>
+  <linearGradient id="sea" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#78CFFF"/><stop offset="1" stop-color="#54B5D6"/></linearGradient>
+</defs>
+<rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+<path d="M18 181c35-27 61-18 88-2 29 18 55 20 80 3 25-17 43-19 62-8v62H18z" fill="url(#sea)" opacity=".82"/>
+<path d="M18 196c33-17 58-12 85 2 31 16 58 16 83 0 26-16 43-16 70-2v40H18z" fill="#3FB89A" opacity=".72"/>
+<path d="M69 83h8V70c0-10 8-18 18-18h22c10 0 18 8 18 18v13h8c15 0 27 12 27 27v73c0 15-12 27-27 27H69c-15 0-27-12-27-27v-73c0-15 12-27 27-27zm24-2h25V70c0-4-3-7-7-7h-11c-4 0-7 3-7 7z" fill="#fff"/>
+<path d="M64 112h83v57c0 8-6 14-14 14H78c-8 0-14-6-14-14z" fill="#FDFDFF"/>
+<circle cx="88" cy="137" r="8" fill="#5E86F2"/><circle cx="124" cy="137" r="8" fill="#5E86F2"/>
+<path d="M84 155c10 11 24 11 34 0" fill="none" stroke="#5E86F2" stroke-width="7" stroke-linecap="round"/>
+<path d="M166 105c0-19 15-34 34-34s34 15 34 34c0 25-34 52-34 52s-34-27-34-52z" fill="#fff"/>
+<circle cx="200" cy="104" r="12" fill="#5E86F2"/>
+<path d="M35 189c18-3 35-1 50 8 17 10 34 12 51 5" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+<path d="M181 45c9 0 16 4 22 11-9-2-17 0-23 5-5-6-5-11 1-16z" fill="#fff" opacity=".9"/>
+<path d="M208 55c8 0 14 3 19 9-8-2-14-1-20 3-4-5-4-8 1-12z" fill="#fff" opacity=".7"/>
+<path d="M184 193c9 2 15 8 18 17-9-4-16-4-23 0 0-7 1-12 5-17z" fill="#fff" opacity=".9"/>
+</svg>
