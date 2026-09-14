@@ -13,9 +13,9 @@
     #ai .composer .btn{flex:0 0 48px!important;width:48px!important;height:48px!important;padding:0!important;border-radius:16px!important;display:grid!important;place-items:center!important;font-size:14px!important;font-weight:800!important}
     @media(max-width:760px){
       #ai .panel.chat{min-height:0!important;height:auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
-      #ai .messages{min-height:0!important;height:auto!important;overflow:visible!important;padding:4px 6px calc(var(--lv-ai-bottom-space,140px) + 64px)!important}
+      #ai .messages{min-height:0!important;height:auto!important;overflow:visible!important;padding:4px 6px calc(var(--lv-ai-bottom-space,0px) + 64px)!important}
       #ai .messages .msg{max-width:88%!important}
-      #ai .composer{position:fixed!important;left:12px!important;right:12px!important;bottom:var(--lv-ai-bottom-space,140px)!important;z-index:45!important;width:auto!important;min-height:56px!important;margin:0!important;border-radius:20px!important;padding:6px 7px 6px 14px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important}
+      #ai .composer{position:fixed!important;left:12px!important;right:12px!important;bottom:var(--lv-ai-bottom-space,0px)!important;z-index:45!important;width:auto!important;min-height:56px!important;margin:0!important;border-radius:20px!important;padding:6px 7px 6px 14px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important}
       #ai .composer textarea{height:42px!important;min-height:42px!important}
       #ai .composer .btn{flex-basis:44px!important;width:44px!important;height:44px!important;border-radius:14px!important}
     }
@@ -23,23 +23,26 @@
   function updateBottomSpace(){
     const nav=document.querySelector('.bottom');
     if(!nav)return;
+    /* fixed 元素与底部栏都以 layout viewport 定位；这里直接用同一坐标系计算。
+       不再使用 visualViewport，避免 iPhone Safari 地址栏变化造成输入框整体上移。 */
     const rect=nav.getBoundingClientRect();
+    const viewportH=window.innerHeight;
     const gap=4;
-    const viewportH=window.visualViewport?window.visualViewport.height:window.innerHeight;
-    const navTop=Math.min(rect.top,viewportH);
-    const space=Math.max(60,Math.round(viewportH-navTop+gap));
-    document.documentElement.style.setProperty('--lv-ai-bottom-space',space+'px');
+    const bottomSpace=Math.max(0,Math.round(viewportH-rect.top+gap));
+    document.documentElement.style.setProperty('--lv-ai-bottom-space',bottomSpace+'px');
+  }
+  function bind(){
+    updateBottomSpace();
+    window.addEventListener('resize',updateBottomSpace,{passive:true});
+    window.addEventListener('orientationchange',()=>setTimeout(updateBottomSpace,80),{passive:true});
+    const nav=document.querySelector('.bottom');
+    if(window.ResizeObserver&&nav)new ResizeObserver(updateBottomSpace).observe(nav);
   }
   function apply(){
     if(!document.getElementById('lvban-ai-chat-final-style')){
       const st=document.createElement('style');st.id='lvban-ai-chat-final-style';st.textContent=css;document.head.appendChild(st);
     }
-    updateBottomSpace();
-    window.addEventListener('resize',updateBottomSpace,{passive:true});
-    window.addEventListener('orientationchange',()=>setTimeout(updateBottomSpace,80),{passive:true});
-    if(window.visualViewport)window.visualViewport.addEventListener('resize',updateBottomSpace,{passive:true});
-    const nav=document.querySelector('.bottom');
-    if(window.ResizeObserver&&nav)new ResizeObserver(updateBottomSpace).observe(nav);
+    bind();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
   window.addEventListener('load',apply,{once:true});
