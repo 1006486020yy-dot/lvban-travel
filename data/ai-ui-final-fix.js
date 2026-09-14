@@ -81,7 +81,7 @@
       font-weight:800!important;
     }
     @media(max-width:760px){
-      /* 手机端：不再让聊天面板撑满屏幕；输入框固定在底部导航上方，始终可见 */
+      /* 手机端：输入框与底部导航动态对齐，不使用写死的 bottom:148px */
       #ai .panel.chat{
         min-height:0!important;
         height:auto!important;
@@ -95,14 +95,14 @@
         min-height:0!important;
         height:auto!important;
         overflow:visible!important;
-        padding:4px 6px 150px!important;
+        padding:4px 6px calc(var(--lv-ai-bottom-space,150px) + 70px)!important;
       }
       #ai .messages .msg{max-width:88%!important}
       #ai .composer{
         position:fixed!important;
         left:12px!important;
         right:12px!important;
-        bottom:148px!important;
+        bottom:var(--lv-ai-bottom-space,150px)!important;
         z-index:45!important;
         width:auto!important;
         min-height:56px!important;
@@ -123,6 +123,14 @@
       }
     }
   `;
+  function updateBottomSpace(){
+    const nav=document.querySelector('.bottom');
+    if(!nav)return;
+    const rect=nav.getBoundingClientRect();
+    const gap=12;
+    const space=Math.max(76,Math.round(window.innerHeight-rect.top+gap));
+    document.documentElement.style.setProperty('--lv-ai-bottom-space',space+'px');
+  }
   function apply(){
     if(!document.getElementById('lvban-ai-chat-final-style')){
       const st=document.createElement('style');
@@ -130,6 +138,12 @@
       st.textContent=css;
       document.head.appendChild(st);
     }
+    updateBottomSpace();
+    window.addEventListener('resize',updateBottomSpace,{passive:true});
+    window.addEventListener('orientationchange',()=>setTimeout(updateBottomSpace,80),{passive:true});
+    if(window.visualViewport)window.visualViewport.addEventListener('resize',updateBottomSpace,{passive:true});
+    const nav=document.querySelector('.bottom');
+    if(window.ResizeObserver&&nav)new ResizeObserver(updateBottomSpace).observe(nav);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
   else apply();
