@@ -3,25 +3,24 @@
   'use strict';
   const css=`
     /* AI 页面只调整视觉容器，不改变 askAI / messages 的业务逻辑 */
-    #ai .panel.chat.ai-ui-locked,
     #ai .panel.chat{
-      min-height:calc(100vh - 190px)!important;
-      height:calc(100vh - 190px)!important;
-      padding:16px!important;
-      background:rgba(255,255,255,.72)!important;
-      border:1px solid rgba(255,255,255,.92)!important;
-      border-radius:28px!important;
-      box-shadow:0 18px 48px rgba(64,58,138,.08)!important;
+      min-height:0!important;
+      height:auto!important;
+      padding:0!important;
+      background:transparent!important;
+      border:0!important;
+      border-radius:0!important;
+      box-shadow:none!important;
       display:flex!important;
       flex-direction:column!important;
-      overflow:hidden!important;
+      overflow:visible!important;
     }
     #ai .messages{
       flex:1 1 auto!important;
       min-height:0!important;
       height:auto!important;
       overflow-y:auto!important;
-      padding:4px 6px 12px!important;
+      padding:4px 6px 18px!important;
       gap:14px!important;
     }
     #ai .messages .msg{
@@ -82,10 +81,46 @@
       font-weight:800!important;
     }
     @media(max-width:760px){
-      #ai .panel.chat.ai-ui-locked,#ai .panel.chat{height:calc(100vh - 150px)!important;min-height:calc(100vh - 150px)!important;padding:12px!important;border-radius:24px!important}
+      /* 手机端：不再让聊天面板撑满屏幕；输入框固定在底部导航上方，始终可见 */
+      #ai .panel.chat{
+        min-height:0!important;
+        height:auto!important;
+        padding:0!important;
+        background:transparent!important;
+        border:0!important;
+        box-shadow:none!important;
+        overflow:visible!important;
+      }
+      #ai .messages{
+        min-height:0!important;
+        height:auto!important;
+        overflow:visible!important;
+        padding:4px 6px 150px!important;
+      }
       #ai .messages .msg{max-width:88%!important}
-      #ai .composer{min-height:56px!important;border-radius:20px!important;padding-left:14px!important}
-      #ai .composer .btn{flex-basis:44px!important;width:44px!important;height:44px!important;border-radius:14px!important}
+      #ai .composer{
+        position:fixed!important;
+        left:12px!important;
+        right:12px!important;
+        bottom:148px!important;
+        z-index:45!important;
+        width:auto!important;
+        min-height:56px!important;
+        margin:0!important;
+        border-radius:20px!important;
+        padding-left:14px!important;
+        box-shadow:0 10px 30px rgba(64,58,138,.14)!important;
+      }
+      #ai .composer textarea{
+        height:42px!important;
+        min-height:42px!important;
+      }
+      #ai .composer .btn{
+        flex-basis:44px!important;
+        width:44px!important;
+        height:44px!important;
+        border-radius:14px!important;
+      }
     }
   `;
   function apply(){
