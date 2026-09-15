@@ -7,7 +7,7 @@
     #ai .messages .msg{flex:0 0 auto!important;max-width:min(78%,680px)!important;width:max-content!important;min-height:0!important;padding:12px 16px!important;border-radius:18px!important;line-height:1.65!important;box-shadow:0 4px 14px rgba(64,58,138,.05)!important}
     #ai .messages .msg.ai{align-self:flex-start!important;background:#fff!important;border:1px solid #ece9f6!important;color:#29283a!important}
     #ai .messages .msg.user{align-self:flex-end!important;background:#6958f5!important;border:1px solid #6958f5!important;color:#fff!important}
-    #ai .composer{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:var(--lv-ai-composer-bottom,84px)!important;transform:translateX(-50%)!important;z-index:110!important;width:min(680px,calc(100% - 24px))!important;min-height:56px!important;height:auto!important;max-height:96px!important;margin:0!important;padding:6px 7px 6px 16px!important;display:flex!important;align-items:flex-end!important;gap:8px!important;background:#fff!important;border:1px solid #dedbea!important;border-radius:22px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important;padding-bottom:max(6px,env(safe-area-inset-bottom))!important}
+    #ai .composer{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:calc(var(--lv-ai-nav-bottom,84px) + var(--lv-ai-composer-gap,8px))!important;transform:translateX(-50%)!important;z-index:110!important;width:min(680px,calc(100% - 24px))!important;min-height:56px!important;height:auto!important;max-height:96px!important;margin:0!important;padding:6px 7px 6px 16px!important;display:flex!important;align-items:flex-end!important;gap:8px!important;background:#fff!important;border:1px solid #dedbea!important;border-radius:22px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important}
     #ai .composer textarea{min-height:42px!important;max-height:72px!important;height:42px!important;line-height:1.5!important;padding:10px 2px!important;background:transparent!important;color:#252433!important;resize:none!important}
     #ai .composer textarea::placeholder{color:#a2a0ad!important}
     #ai .composer .btn{flex:0 0 48px!important;width:48px!important;height:48px!important;padding:0!important;border-radius:16px!important;display:grid!important;place-items:center!important;font-size:14px!important;font-weight:800!important}
@@ -21,23 +21,22 @@
     if(!composer)return;
     const nav=document.querySelector('.bottom');
     const vv=window.visualViewport;
-    const viewportH=vv&&vv.height?vv.height:window.innerHeight;
     const layoutH=window.innerHeight;
+    const viewportH=vv&&vv.height?vv.height:layoutH;
     const keyboardOpen=!!(vv&&layoutH-vv.height>120);
-    let bottom;
+    let bottomGap;
     if(keyboardOpen){
-      bottom=Math.max(6,Math.round(layoutH-vv.height+6));
+      bottomGap=Math.max(0,Math.round(layoutH-vv.height));
     }else if(nav){
       const r=nav.getBoundingClientRect();
-      const safe=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lv-safe-bottom'))||0;
-      bottom=Math.max(6,Math.round(layoutH-r.top+6-safe));
+      bottomGap=Math.max(0,Math.round(layoutH-r.top));
     }else{
-      bottom=Math.max(12,Math.round(layoutH-viewportH+12));
+      bottomGap=Math.max(0,Math.round(layoutH-viewportH));
     }
-    document.documentElement.style.setProperty('--lv-ai-composer-bottom',bottom+'px');
+    document.documentElement.style.setProperty('--lv-ai-nav-bottom',bottomGap+'px');
     const h=Math.round(composer.getBoundingClientRect().height||56);
     const msg=document.querySelector('#ai .messages');
-    if(msg)msg.style.paddingBottom=Math.max(130,bottom+h+18)+'px';
+    if(msg)msg.style.paddingBottom=Math.max(130,bottomGap+8+h+18)+'px';
   }
   function bindPosition(){
     if(bound)return;bound=true;
@@ -45,6 +44,8 @@
     window.addEventListener('resize',run,{passive:true});
     window.addEventListener('orientationchange',()=>setTimeout(run,120),{passive:true});
     if(window.visualViewport){window.visualViewport.addEventListener('resize',run,{passive:true});window.visualViewport.addEventListener('scroll',run,{passive:true})}
+    const nav=document.querySelector('.bottom');
+    if(nav&&window.ResizeObserver){new ResizeObserver(run).observe(nav)}
   }
   function addRecommendationCards(input){const box=document.querySelector('#ai .messages'),D=window.LVBAN_DATA||{};if(!box||!Array.isArray(D.spots)||!D.spots.length)return;const text=String(input||'').trim();if(!text)return;const cities=['福州','平潭','厦门','泉州'],city=cities.find(c=>text.includes(c)),pool=D.spots.filter(x=>!city||x.city===city);if(!pool.length)return;const key=(text.match(/景点|景区|海边|沙滩|逛|玩|去哪|推荐|旅游|打卡/)||[])[0];if(!key&&!city)return;const picks=pool.slice(0,4),old=box.querySelector('.lv-ai-recs');if(old)old.remove();const wrap=document.createElement('div');wrap.className='lv-ai-recs';wrap.innerHTML='<div class="lv-ai-recs-title">旅伴为你找到这些可直接加入行程的推荐</div>';picks.forEach(x=>{const card=document.createElement('div');card.className='lv-ai-rec';card.innerHTML='<div class="lv-ai-rec-head"><div><div class="lv-ai-rec-name"></div><div class="lv-ai-rec-city"></div></div></div><div class="lv-ai-rec-address"></div><button class="lv-ai-rec-btn">＋ 加入已创建行程</button>';card.querySelector('.lv-ai-rec-name').textContent=x.name||'';card.querySelector('.lv-ai-rec-city').textContent=x.city||'';card.querySelector('.lv-ai-rec-address').textContent=x.address||'暂无地址';card.querySelector('button').onclick=()=>openAddSheet(x);wrap.appendChild(card)});box.appendChild(wrap);requestAnimationFrame(()=>{positionComposer();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})})}
   function openAddSheet(item){const trips=Array.isArray(window.db?.trips)?window.db.trips:[];if(!trips.length){alert('目前还没有已创建的行程，请先创建一个行程');return}const mask=document.createElement('div');mask.className='lv-ai-mask';mask.innerHTML='<div class="lv-ai-sheet"><div class="lv-ai-sheet-head"><h3>加入行程</h3><button class="lv-ai-cancel">关闭</button></div><div class="lv-ai-rec" style="margin-bottom:10px"><div class="lv-ai-rec-name"></div><div class="lv-ai-rec-city"></div><div class="lv-ai-rec-address"></div></div><div class="lv-ai-label">选择大行程</div><select class="lv-ai-select lv-ai-trip"></select><div class="lv-ai-label">选择方案</div><select class="lv-ai-select lv-ai-plan"></select><div class="lv-ai-label">选择哪一天</div><select class="lv-ai-select lv-ai-day"></select><button class="lv-ai-confirm">加入当天行程</button></div>';document.body.appendChild(mask);mask.querySelector('.lv-ai-rec-name').textContent=item.name||'';mask.querySelector('.lv-ai-rec-city').textContent=item.city||'';mask.querySelector('.lv-ai-rec-address').textContent=item.address||'暂无地址';const ts=mask.querySelector('.lv-ai-trip'),ps=mask.querySelector('.lv-ai-plan'),ds=mask.querySelector('.lv-ai-day');ts.innerHTML=trips.map((t,i)=>'<option value="'+String(t.id).replace(/"/g,'&quot;')+'">'+(t.name||('行程 '+(i+1)))+'</option>').join('');function refresh(){const t=trips.find(t=>String(t.id)===String(ts.value))||trips[0],plans=Array.isArray(t.plans)?t.plans:[];ps.innerHTML=plans.map((p,i)=>'<option value="'+String(p.id).replace(/"/g,'&quot;')+'">'+(p.name||('方案 '+(i+1)))+'</option>').join('');refreshDays()}function refreshDays(){const t=trips.find(t=>String(t.id)===String(ts.value))||trips[0],p=(t.plans||[]).find(p=>String(p.id)===String(ps.value))||t.plans?.[0];ds.innerHTML=(p?.days||[]).map((d,i)=>'<option value="'+i+'">'+(d.label||d.title||('DAY '+(i+1)))+' · '+(d.date||'')+'</option>').join('')}ts.onchange=refresh;ps.onchange=refreshDays;refresh();mask.querySelector('.lv-ai-cancel').onclick=()=>mask.remove();mask.querySelector('.lv-ai-confirm').onclick=()=>{const t=trips.find(t=>String(t.id)===String(ts.value))||trips[0],p=(t.plans||[]).find(p=>String(p.id)===String(ps.value))||t.plans?.[0],idx=Number(ds.value),d=p?.days?.[idx];if(!t||!p||!d)return alert('请选择有效的行程、方案和日期');d.items=Array.isArray(d.items)?d.items:[];if(d.items.some(i=>String(i.name)===String(item.name))){mask.remove();alert('这一天已经有「'+item.name+'」了');return}d.items.push({id:(window.uid?window.uid():('ai-'+Date.now())),time:'09:00',type:'景点',name:item.name,address:item.address||'',city:item.city||'',budget:Number(item.price)||0});d.items.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));try{window.save?.()}catch(e){}try{window.activeTrip=t.id;window.activePlan=p.id;window.activeDay=idx}catch(e){}mask.remove();if(typeof window.renderTrips==='function')window.renderTrips();if(typeof window.go==='function')window.go('trips')};}
