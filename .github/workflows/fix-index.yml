@@ -20,10 +20,13 @@ jobs:
               tag=f'<script src="{src}"></script>'
               if tag not in s:
                   s=s.replace('</body>', tag+'\n</body>', 1)
-          ai_tag='<script src="data/ai-composer-hard-fix.js?v=20260915-2"></script>'
-          old_tag='<script src="data/ai-composer-hard-fix.js?v=20260915-1"></script>'
+          ai_tag='<script src="data/ai-composer-hard-fix.js?v=20260915-3"></script>'
+          old_tag='<script src="data/ai-composer-hard-fix.js?v=20260915-2"></script>'
+          old_tag2='<script src="data/ai-composer-hard-fix.js?v=20260915-1"></script>'
           if old_tag in s:
               s=s.replace(old_tag,ai_tag)
+          elif old_tag2 in s:
+              s=s.replace(old_tag2,ai_tag)
           elif ai_tag not in s:
               s=s.replace('</body>', ai_tag+'\n</body>', 1)
           p.write_text(s,encoding='utf-8')
