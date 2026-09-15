@@ -1,14 +1,15 @@
-/* 旅伴 AI · 手机端输入框 + 推荐加入行程交互 */
+/* 旅伴 AI · 输入框固定在底部导航上方 + 推荐加入行程交互 */
 (function(){
   'use strict';
   const css=`
     #ai .panel.chat{min-height:0!important;height:auto!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;display:flex!important;flex-direction:column!important;overflow:visible!important}
-    #ai .messages{min-height:0!important;height:auto!important;overflow:visible!important;padding:4px 6px 18px!important;gap:14px!important}
+    #ai .messages{min-height:0!important;height:auto!important;overflow:visible!important;padding:4px 6px 150px!important;gap:14px!important}
     #ai .messages .msg{flex:0 0 auto!important;max-width:min(78%,680px)!important;width:max-content!important;min-height:0!important;padding:12px 16px!important;border-radius:18px!important;line-height:1.65!important;box-shadow:0 4px 14px rgba(64,58,138,.05)!important}
     #ai .messages .msg.ai{align-self:flex-start!important;background:#fff!important;border:1px solid #ece9f6!important;color:#29283a!important}
     #ai .messages .msg.user{align-self:flex-end!important;background:#6958f5!important;border:1px solid #6958f5!important;color:#fff!important}
-    #ai .composer{flex:0 0 auto!important;width:100%!important;min-height:60px!important;margin:8px 0 0!important;padding:6px 7px 6px 16px!important;display:flex!important;align-items:center!important;gap:8px!important;background:#fff!important;border:1px solid #dedbea!important;border-radius:22px!important;box-shadow:0 8px 24px rgba(64,58,138,.09)!important}
+    #ai .composer{position:fixed!important;left:50%!important;right:auto!important;bottom:var(--lv-ai-composer-bottom,88px)!important;top:auto!important;transform:translateX(-50%)!important;z-index:110!important;width:min(680px,calc(100% - 24px))!important;min-height:60px!important;margin:0!important;padding:6px 7px 6px 16px!important;display:flex!important;align-items:center!important;gap:8px!important;background:#fff!important;border:1px solid #dedbea!important;border-radius:22px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important}
     #ai .composer textarea{min-height:42px!important;max-height:120px!important;height:42px!important;line-height:1.5!important;padding:10px 2px!important;background:transparent!important;color:#252433!important}
+    #ai .composer textarea::placeholder{color:#a2a0ad!important}
     #ai .composer .btn{flex:0 0 48px!important;width:48px!important;height:48px!important;padding:0!important;border-radius:16px!important;display:grid!important;place-items:center!important;font-size:14px!important;font-weight:800!important}
     .lv-ai-recs{margin:2px 0 4px;display:grid;gap:9px;max-width:100%}
     .lv-ai-recs-title{font-size:12px;font-weight:800;color:#77788b;padding-left:3px}
@@ -27,10 +28,9 @@
     .lv-ai-confirm{width:100%;padding:13px;border:0;border-radius:15px;background:#6958f5;color:#fff;font-weight:800;margin-top:5px}
     .lv-ai-cancel{border:0;background:#efedff;color:#6958f5;border-radius:12px;padding:8px 11px;font-weight:700}
     @media(max-width:760px){
-      #ai .panel.chat{min-height:0!important;height:auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
-      #ai .messages{padding:4px 6px 120px!important}
+      #ai .messages{padding:4px 6px 130px!important}
       #ai .messages .msg{max-width:88%!important}
-      #ai .composer{position:fixed!important;left:12px!important;right:12px!important;bottom:auto!important;top:var(--lv-ai-composer-top,auto)!important;z-index:110!important;width:auto!important;min-height:56px!important;margin:0!important;border-radius:20px!important;padding:6px 7px 6px 14px!important;box-shadow:0 10px 30px rgba(64,58,138,.14)!important}
+      #ai .composer{left:12px!important;right:12px!important;transform:none!important;width:auto!important;min-height:56px!important;border-radius:20px!important;padding:6px 7px 6px 14px!important}
       #ai .composer textarea{height:42px!important;min-height:42px!important}
       #ai .composer .btn{flex-basis:44px!important;width:44px!important;height:44px!important;border-radius:14px!important}
       .lv-ai-rec{padding:11px}
@@ -40,14 +40,16 @@
   function positionComposer(){
     const composer=document.querySelector('#ai .composer'),nav=document.querySelector('.bottom');
     if(!composer||!nav)return;
-    if(window.innerWidth>760){composer.style.removeProperty('top');return}
     const navRect=nav.getBoundingClientRect();
-    const h=composer.getBoundingClientRect().height||56;
+    const viewportH=window.innerHeight;
     const gap=6;
-    const top=Math.max(8,Math.round(navRect.top-h-gap));
-    document.documentElement.style.setProperty('--lv-ai-composer-top',top+'px');
+    const bottom=Math.max(6,Math.round(viewportH-navRect.top+gap));
+    document.documentElement.style.setProperty('--lv-ai-composer-bottom',bottom+'px');
     const msg=document.querySelector('#ai .messages');
-    if(msg)msg.style.paddingBottom=(Math.max(120,Math.round(window.innerHeight-navRect.top+h+18)))+'px';
+    if(msg){
+      const composerH=Math.round(composer.getBoundingClientRect().height||60);
+      msg.style.paddingBottom=Math.max(130,Math.round(bottom+composerH+18))+'px';
+    }
   }
   function addRecommendationCards(input){
     const box=document.querySelector('#ai .messages');
@@ -123,6 +125,8 @@
     injectStyle();positionComposer();wrapAskAI();
     window.addEventListener('resize',positionComposer,{passive:true});
     window.addEventListener('orientationchange',()=>setTimeout(positionComposer,100),{passive:true});
+    window.addEventListener('load',positionComposer,{once:true});
+    setTimeout(positionComposer,200);setTimeout(positionComposer,800);
     setTimeout(wrapAskAI,300);setTimeout(wrapAskAI,1000);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
