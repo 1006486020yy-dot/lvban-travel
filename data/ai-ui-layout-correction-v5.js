@@ -7,7 +7,9 @@
   window.__lvbanAiLayoutCorrectionV5=true;
   const STYLE_ID='lvban-ai-layout-correction-v5-style';
   const ROOT_ID='lvban-ai-quick-prompts-v1';
+  const FAB_ID='lvban-ai-nav-fab-v2';
   const css=`
+    #${FAB_ID},body.lvban-ai-mode #${FAB_ID}{display:none!important;visibility:hidden!important;pointer-events:none!important}
     body.lvban-ai-mode #${ROOT_ID}{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:calc(var(--lvban-ai-composer-space,118px) + 12px)!important;transform:translateX(-50%)!important;width:min(760px,calc(100% - 32px))!important;display:flex!important;flex-direction:row!important;justify-content:flex-end!important;align-items:center!important;gap:8px!important;padding:0!important;margin:0!important;z-index:124!important;pointer-events:none!important;box-sizing:border-box!important}
     body.lvban-ai-mode #${ROOT_ID}.lv-ai-quick-hidden{display:none!important;opacity:0!important;visibility:hidden!important}
     body.lvban-ai-mode #${ROOT_ID} button{pointer-events:auto!important;flex:0 0 auto!important;height:40px!important;min-height:40px!important;padding:0 14px!important;border-radius:20px!important;border:1px solid #d7e5f6!important;background:rgba(255,255,255,.97)!important;color:#3971b7!important;font-size:13px!important;line-height:40px!important;white-space:nowrap!important;box-shadow:0 6px 18px rgba(40,83,135,.08)!important;backdrop-filter:blur(18px)!important;box-sizing:border-box!important}
